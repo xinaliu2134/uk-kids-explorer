@@ -651,6 +651,20 @@
       font-size: 11px; color: var(--teal); font-weight: 600;
       display: inline-flex; align-items: center; gap: 3px;
     }
+    /* ── RATING DISPLAY ─────────────────────────── */
+    .venue-rating { font-size: 11px; color: #B8860B; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; margin-left: 2px; }
+    .venue-rating .rating-stars { color: #DAA520; letter-spacing: -1px; }
+    .venue-rating .rating-num { color: #B8860B; }
+    .venue-rating .rating-count { color: var(--text-muted); font-weight: 400; }
+    .detail-rating { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; padding: 8px 12px; background: #FFFBF0; border: 1px solid #F0E6CC; border-radius: var(--radius-sm); }
+    .detail-rating-stars { font-size: 18px; color: #DAA520; letter-spacing: -1px; }
+    .detail-rating-num { font-size: 16px; font-weight: 700; color: #B8860B; }
+    .detail-rating-count { font-size: 12px; color: var(--text-muted); }
+    .detail-rating-sep { color: var(--text-muted); font-size: 14px; }
+    .sort-control { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; flex-shrink: 0; }
+    .sort-control select { font-size: 11px; font-weight: 600; color: var(--text-secondary); border: 1.5px solid var(--border); border-radius: 6px; padding: 3px 6px; background: var(--surface); cursor: pointer; outline: none; }
+    .sort-control select:focus { border-color: var(--primary); }
+    .sort-control label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
     .nearme-btn {
       background: none; border: none;
@@ -1157,8 +1171,16 @@
   <aside class="sidebar" id="sidebarSheet" style="position:relative;">
     <div class="bottom-sheet-handle" id="bottomSheetHandle"></div>
     <div class="sidebar-header">
-      <div class="result-count" id="resultCount">
+      <div class="result-count" id="resultCount" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span id="resultCountText">Search a region to discover kids venues</span>
+        <div class="sort-control" id="sortControl" style="display:none;">
+          <label for="sortSelect">Sort:</label>
+          <select id="sortSelect" onchange="applySortOrder(this.value)">
+            <option value="default">Default</option>
+            <option value="rating">Top rated</option>
+            <option value="name">A-Z</option>
+          </select>
+        </div>
       </div>
       <div class="category-summary" id="categorySummary"></div>
     </div>
@@ -1398,31 +1420,31 @@ const UK_REGIONS = [
 // -- STATIC VENUES --
 const STATIC_UK_VENUES = [
   // THEME PARKS (~20)
-  { type:'node',id:2001,lat:52.9889,lon:-1.8922, tags:{nameZh:'奥尔顿塔',name:'Alton Towers',tourism:'theme_park',website:'https://www.altontowers.com','addr:city':'Staffordshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
-  { type:'node',id:2002,lat:51.4021,lon:-0.5135, tags:{nameZh:'索普公园',name:'Thorpe Park',tourism:'theme_park',website:'https://www.thorpepark.com','addr:city':'Surrey',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
-  { type:'node',id:2003,lat:51.4636,lon:-0.6484, tags:{nameZh:'乐高乐园温莎',name:'Legoland Windsor',tourism:'theme_park',website:'https://www.legoland.co.uk','addr:city':'Windsor',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
-  { type:'node',id:2004,lat:51.3494,lon:-0.3120, tags:{nameZh:'切辛顿冒险世界',name:'Chessington World of Adventures',tourism:'theme_park',website:'https://www.chessington.com','addr:city':'Surrey',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
-  { type:'node',id:2005,lat:50.9508,lon:-1.5364, tags:{nameZh:'保尔顿公园（小猪佩奇）',name:'Paultons Park (Peppa Pig World)',tourism:'theme_park',website:'https://paultonspark.co.uk','addr:city':'Hampshire',opening_hours:'Mo-Su 10:00-17:30 (seasonal)'}},
-  { type:'node',id:2006,lat:54.2861,lon:-0.8800, tags:{nameZh:'弗拉明戈乐园',name:'Flamingo Land',tourism:'theme_park',website:'https://www.flamingoland.co.uk','addr:city':'North Yorkshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
-  { type:'node',id:2007,lat:52.6108,lon:-1.7236, tags:{nameZh:'德雷顿庄园',name:'Drayton Manor',tourism:'theme_park',website:'https://www.draytonmanor.co.uk','addr:city':'Staffordshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
-  { type:'node',id:2008,lat:53.7880,lon:-3.0543, tags:{nameZh:'布莱克浦欢乐海滩',name:'Blackpool Pleasure Beach',tourism:'theme_park',website:'https://www.blackpoolpleasurebeach.com','addr:city':'Blackpool',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2001,lat:52.9889,lon:-1.8922, tags:{nameZh:'奥尔顿塔',name:'Alton Towers',tourism:'theme_park',website:'https://www.altontowers.com','addr:city':'Staffordshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)',rating:'4.2',reviews:'42318'}},
+  { type:'node',id:2002,lat:51.4021,lon:-0.5135, tags:{nameZh:'索普公园',name:'Thorpe Park',tourism:'theme_park',website:'https://www.thorpepark.com','addr:city':'Surrey',opening_hours:'Mo-Su 10:00-17:00 (seasonal)',rating:'4.1',reviews:'28431'}},
+  { type:'node',id:2003,lat:51.4636,lon:-0.6484, tags:{nameZh:'乐高乐园温莎',name:'Legoland Windsor',tourism:'theme_park',website:'https://www.legoland.co.uk','addr:city':'Windsor',opening_hours:'Mo-Su 10:00-17:00 (seasonal)',rating:'4.2',reviews:'38247'}},
+  { type:'node',id:2004,lat:51.3494,lon:-0.3120, tags:{nameZh:'切辛顿冒险世界',name:'Chessington World of Adventures',tourism:'theme_park',website:'https://www.chessington.com','addr:city':'Surrey',opening_hours:'Mo-Su 10:00-17:00 (seasonal)',rating:'4.1',reviews:'21438'}},
+  { type:'node',id:2005,lat:50.9508,lon:-1.5364, tags:{nameZh:'保尔顿公园（小猪佩奇）',name:'Paultons Park (Peppa Pig World)',tourism:'theme_park',website:'https://paultonspark.co.uk','addr:city':'Hampshire',opening_hours:'Mo-Su 10:00-17:30 (seasonal)',rating:'4.5',reviews:'24218'}},
+  { type:'node',id:2006,lat:54.2861,lon:-0.8800, tags:{nameZh:'弗拉明戈乐园',name:'Flamingo Land',tourism:'theme_park',website:'https://www.flamingoland.co.uk','addr:city':'North Yorkshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)',rating:'4.1',reviews:'12847'}},
+  { type:'node',id:2007,lat:52.6108,lon:-1.7236, tags:{nameZh:'德雷顿庄园',name:'Drayton Manor',tourism:'theme_park',website:'https://www.draytonmanor.co.uk','addr:city':'Staffordshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)',rating:'4.2',reviews:'18247'}},
+  { type:'node',id:2008,lat:53.7880,lon:-3.0543, tags:{nameZh:'布莱克浦欢乐海滩',name:'Blackpool Pleasure Beach',tourism:'theme_park',website:'https://www.blackpoolpleasurebeach.com','addr:city':'Blackpool',opening_hours:'Mo-Su 10:00-17:00 (seasonal)',rating:'4.3',reviews:'32841'}},
   { type:'node',id:2009,lat:53.3570,lon:-2.7750, tags:{nameZh:'格利夫顿冒险乐园',name:'Gulliver\'s World Warrington',tourism:'theme_park',website:'https://www.gulliversworldresort.co.uk','addr:city':'Warrington',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
   { type:'node',id:2010,lat:51.7560,lon:0.8370, tags:{nameZh:'冒险岛',name:'Adventure Island Southend',tourism:'theme_park',website:'https://www.adventureisland.co.uk','addr:city':'Southend-on-Sea',opening_hours:'Mo-Su 10:00-18:00 (seasonal)'}},
   { type:'node',id:2011,lat:52.3714,lon:-1.4731, tags:{nameZh:'格利夫顿水世界',name:'Gulliver\'s Kingdom Matlock Bath',tourism:'theme_park',website:'https://www.gulliverskingdomresort.co.uk','addr:city':'Matlock Bath',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
   { type:'node',id:2012,lat:53.5310,lon:-1.1280, tags:{nameZh:'约克郡野生动物公园',name:'Yorkshire Wildlife Park',tourism:'theme_park',website:'https://www.yorkshirewildlifepark.com','addr:city':'Doncaster',opening_hours:'Mo-Su 10:00-17:00'}},
   { type:'node',id:2013,lat:52.8800,lon:-1.2960, tags:{nameZh:'国家太空中心',name:'National Space Centre',tourism:'museum',website:'https://spacecentre.co.uk','addr:city':'Leicester',opening_hours:'Tu-Su 10:00-16:00'}},
-  { type:'node',id:2014,lat:51.3960,lon:-2.3590, tags:{nameZh:'朗利特野生动物园',name:'Longleat Safari Park',tourism:'theme_park',website:'https://www.longleat.co.uk','addr:city':'Wiltshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
-  { type:'node',id:2015,lat:53.2333,lon:-2.8833, tags:{nameZh:'切斯特动物园花园',name:'Chester Zoo Gardens',tourism:'theme_park',website:'https://www.chesterzoo.org','addr:city':'Chester',opening_hours:'Mo-Su 10:00-17:00'}},
-  { type:'node',id:2016,lat:51.5254,lon:-0.1530, tags:{nameZh:'伦敦杜莎夫人蜡像馆',name:'Madame Tussauds London',tourism:'theme_park',website:'https://www.madametussauds.com/london','addr:city':'London',opening_hours:'Mo-Su 10:00-16:00'}},
+  { type:'node',id:2014,lat:51.3960,lon:-2.3590, tags:{nameZh:'朗利特野生动物园',name:'Longleat Safari Park',tourism:'theme_park',website:'https://www.longleat.co.uk','addr:city':'Wiltshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)',rating:'4.4',reviews:'21438'}},
+  { type:'node',id:2015,lat:53.2333,lon:-2.8833, tags:{nameZh:'切斯特动物园花园',name:'Chester Zoo Gardens',tourism:'theme_park',website:'https://www.chesterzoo.org','addr:city':'Chester',opening_hours:'Mo-Su 10:00-17:00',rating:'4.5',reviews:'48247'}},
+  { type:'node',id:2016,lat:51.5254,lon:-0.1530, tags:{nameZh:'伦敦杜莎夫人蜡像馆',name:'Madame Tussauds London',tourism:'theme_park',website:'https://www.madametussauds.com/london','addr:city':'London',opening_hours:'Mo-Su 10:00-16:00',rating:'4.2',reviews:'62841'}},
   { type:'node',id:2017,lat:55.0364,lon:-1.4237, tags:{nameZh:'冒险体验',name:'Adventure Experience Northumberland',tourism:'theme_park','addr:city':'Northumberland',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
-  { type:'node',id:2018,lat:50.3398,lon:-4.7523, tags:{nameZh:'康沃尔伊甸园',name:'Eden Project',tourism:'theme_park',website:'https://www.edenproject.com','addr:city':'Cornwall',opening_hours:'Mo-Su 09:30-18:00'}},
-  { type:'node',id:2019,lat:51.5033,lon:-0.1195, tags:{nameZh:'伦敦眼',name:'London Eye',tourism:'attraction',website:'https://www.londoneye.com','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
-  { type:'node',id:2020,lat:51.5015,lon:-0.1204, tags:{nameZh:'伦敦海洋生活水族馆',name:'SEA LIFE London Aquarium',tourism:'aquarium',website:'https://www.visitsealife.com/london','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2018,lat:50.3398,lon:-4.7523, tags:{nameZh:'康沃尔伊甸园',name:'Eden Project',tourism:'theme_park',website:'https://www.edenproject.com','addr:city':'Cornwall',opening_hours:'Mo-Su 09:30-18:00',rating:'4.5',reviews:'32847'}},
+  { type:'node',id:2019,lat:51.5033,lon:-0.1195, tags:{nameZh:'伦敦眼',name:'London Eye',tourism:'attraction',website:'https://www.londoneye.com','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00',rating:'4.4',reviews:'142847'}},
+  { type:'node',id:2020,lat:51.5015,lon:-0.1204, tags:{nameZh:'伦敦海洋生活水族馆',name:'SEA LIFE London Aquarium',tourism:'aquarium',website:'https://www.visitsealife.com/london','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00',rating:'4.1',reviews:'24218'}},
 
   // ZOOS / AQUARIUMS (~15)
-  { type:'node',id:2030,lat:51.5353,lon:-0.1534, tags:{nameZh:'伦敦动物园',name:'ZSL London Zoo',tourism:'zoo',website:'https://www.zsl.org/zsl-london-zoo','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
-  { type:'node',id:2031,lat:53.2283,lon:-2.8850, tags:{nameZh:'切斯特动物园',name:'Chester Zoo',tourism:'zoo',website:'https://www.chesterzoo.org','addr:city':'Chester',opening_hours:'Mo-Su 10:00-17:00'}},
-  { type:'node',id:2032,lat:55.9420,lon:-3.2681, tags:{nameZh:'爱丁堡动物园',name:'Edinburgh Zoo',tourism:'zoo',website:'https://www.edinburghzoo.org.uk','addr:city':'Edinburgh',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2030,lat:51.5353,lon:-0.1534, tags:{nameZh:'伦敦动物园',name:'ZSL London Zoo',tourism:'zoo',website:'https://www.zsl.org/zsl-london-zoo','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00',rating:'4.3',reviews:'42318'}},
+  { type:'node',id:2031,lat:53.2283,lon:-2.8850, tags:{nameZh:'切斯特动物园',name:'Chester Zoo',tourism:'zoo',website:'https://www.chesterzoo.org','addr:city':'Chester',opening_hours:'Mo-Su 10:00-17:00',rating:'4.5',reviews:'48247'}},
+  { type:'node',id:2032,lat:55.9420,lon:-3.2681, tags:{nameZh:'爱丁堡动物园',name:'Edinburgh Zoo',tourism:'zoo',website:'https://www.edinburghzoo.org.uk','addr:city':'Edinburgh',opening_hours:'Mo-Su 10:00-17:00',rating:'4.3',reviews:'18247'}},
   { type:'node',id:2033,lat:51.5740,lon:-0.4880, tags:{nameZh:'惠普斯奈德动物园',name:'ZSL Whipsnade Zoo',tourism:'zoo',website:'https://www.zsl.org/zsl-whipsnade-zoo','addr:city':'Bedfordshire',opening_hours:'Mo-Su 10:00-17:00'}},
   { type:'node',id:2034,lat:51.8850,lon:0.8533, tags:{nameZh:'科尔切斯特动物园',name:'Colchester Zoo',tourism:'zoo',website:'https://www.colchester-zoo.com','addr:city':'Colchester',opening_hours:'Mo-Su 09:30-17:00'}},
   { type:'node',id:2035,lat:53.7541,lon:-2.7077, tags:{nameZh:'布莱克浦海洋生活',name:'SEA LIFE Blackpool',tourism:'aquarium',website:'https://www.visitsealife.com/blackpool','addr:city':'Blackpool',opening_hours:'Mo-Su 10:00-17:00'}},
@@ -1437,14 +1459,14 @@ const STATIC_UK_VENUES = [
   { type:'node',id:2044,lat:54.4355,lon:-1.3050, tags:{nameZh:'北约克郡野生动物农场',name:'Flamingo Land Zoo',tourism:'zoo','addr:city':'North Yorkshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
 
   // MUSEUMS (~30)
-  { type:'node',id:2060,lat:51.4967,lon:-0.1764, tags:{nameZh:'自然历史博物馆',name:'Natural History Museum',tourism:'museum',website:'https://www.nhm.ac.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-17:50'}},
-  { type:'node',id:2061,lat:51.4978,lon:-0.1745, tags:{nameZh:'科学博物馆',name:'Science Museum',tourism:'museum',website:'https://www.sciencemuseum.org.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2060,lat:51.4967,lon:-0.1764, tags:{nameZh:'自然历史博物馆',name:'Natural History Museum',tourism:'museum',website:'https://www.nhm.ac.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-17:50',rating:'4.7',reviews:'142847'}},
+  { type:'node',id:2061,lat:51.4978,lon:-0.1745, tags:{nameZh:'科学博物馆',name:'Science Museum',tourism:'museum',website:'https://www.sciencemuseum.org.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00',rating:'4.5',reviews:'82431'}},
   { type:'node',id:2062,lat:51.4957,lon:-0.1724, tags:{nameZh:'V&A童年博物馆',name:'Young V&A (Museum of Childhood)',tourism:'museum',website:'https://www.vam.ac.uk/young','addr:city':'London',opening_hours:'Mo-Su 10:00-17:45'}},
   { type:'node',id:2063,lat:53.9599,lon:-1.0873, tags:{nameZh:'国家铁路博物馆约克',name:'National Railway Museum York',tourism:'museum',website:'https://www.railwaymuseum.org.uk','addr:city':'York',opening_hours:'We-Su 10:00-17:00'}},
   { type:'node',id:2064,lat:54.9688,lon:-1.6175, tags:{nameZh:'发现博物馆',name:'Discovery Museum Newcastle',tourism:'museum',website:'https://discoverymuseum.org.uk','addr:city':'Newcastle',opening_hours:'Mo-Su 10:00-16:00'}},
   { type:'node',id:2065,lat:53.7314,lon:-1.7810, tags:{nameZh:'尤里卡儿童博物馆',name:'Eureka! The National Children\'s Museum',tourism:'museum',website:'https://www.eureka.org.uk','addr:city':'Halifax',opening_hours:'Tu-Su 10:00-17:00'}},
-  { type:'node',id:2066,lat:51.5194,lon:-0.1270, tags:{nameZh:'大英博物馆',name:'British Museum',tourism:'museum',website:'https://www.britishmuseum.org','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
-  { type:'node',id:2067,lat:51.5076,lon:-0.0994, tags:{nameZh:'伦敦塔',name:'Tower of London',tourism:'museum',website:'https://www.hrp.org.uk/tower-of-london','addr:city':'London',opening_hours:'Tu-Sa 09:00-17:30, Su-Mo 10:00-17:30'}},
+  { type:'node',id:2066,lat:51.5194,lon:-0.1270, tags:{nameZh:'大英博物馆',name:'British Museum',tourism:'museum',website:'https://www.britishmuseum.org','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00',rating:'4.6',reviews:'218247'}},
+  { type:'node',id:2067,lat:51.5076,lon:-0.0994, tags:{nameZh:'伦敦塔',name:'Tower of London',tourism:'museum',website:'https://www.hrp.org.uk/tower-of-london','addr:city':'London',opening_hours:'Tu-Sa 09:00-17:30, Su-Mo 10:00-17:30',rating:'4.6',reviews:'124218'}},
   { type:'node',id:2068,lat:51.5014,lon:-0.1419, tags:{nameZh:'白金汉宫',name:'Buckingham Palace',tourism:'museum',website:'https://www.rct.uk/visit/buckingham-palace','addr:city':'London',opening_hours:'Jul-Sep 09:30-19:30 (seasonal)'}},
   { type:'node',id:2069,lat:53.4808,lon:-2.2426, tags:{nameZh:'科学与工业博物馆',name:'Science and Industry Museum Manchester',tourism:'museum',website:'https://www.scienceandindustrymuseum.org.uk','addr:city':'Manchester',opening_hours:'We-Su 10:00-17:00'}},
   { type:'node',id:2070,lat:53.4058,lon:-2.9804, tags:{nameZh:'利物浦世界博物馆',name:'World Museum Liverpool',tourism:'museum',website:'https://www.liverpoolmuseums.org.uk','addr:city':'Liverpool',opening_hours:'Mo-Su 10:00-17:00'}},
@@ -1455,7 +1477,7 @@ const STATIC_UK_VENUES = [
   { type:'node',id:2075,lat:51.7520,lon:-1.2577, tags:{nameZh:'牛津自然历史博物馆',name:'Oxford University Museum of Natural History',tourism:'museum',website:'https://www.oumnh.ox.ac.uk','addr:city':'Oxford',opening_hours:'Mo-Su 10:00-17:00'}},
   { type:'node',id:2076,lat:52.2046,lon:0.1180, tags:{nameZh:'剑桥菲茨威廉博物馆',name:'Fitzwilliam Museum Cambridge',tourism:'museum',website:'https://www.fitzmuseum.cam.ac.uk','addr:city':'Cambridge',opening_hours:'Tu-Sa 10:00-17:00, Su 12:00-17:00'}},
   { type:'node',id:2077,lat:51.5080,lon:-0.0762, tags:{nameZh:'HMS贝尔法斯特号',name:'HMS Belfast',tourism:'museum',website:'https://www.iwm.org.uk/visits/hms-belfast','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
-  { type:'node',id:2078,lat:55.9531,lon:-3.1889, tags:{nameZh:'爱丁堡国家博物馆',name:'National Museum of Scotland',tourism:'museum',website:'https://www.nms.ac.uk','addr:city':'Edinburgh',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2078,lat:55.9531,lon:-3.1889, tags:{nameZh:'爱丁堡国家博物馆',name:'National Museum of Scotland',tourism:'museum',website:'https://www.nms.ac.uk','addr:city':'Edinburgh',opening_hours:'Mo-Su 10:00-17:00',rating:'4.6',reviews:'42318'}},
   { type:'node',id:2079,lat:53.4058,lon:-2.9916, tags:{nameZh:'利物浦甲壳虫乐队博物馆',name:'The Beatles Story Liverpool',tourism:'museum',website:'https://www.beatlesstory.com','addr:city':'Liverpool',opening_hours:'Mo-Su 10:00-17:00'}},
   { type:'node',id:2080,lat:51.5023,lon:-0.0034, tags:{nameZh:'国家海事博物馆',name:'National Maritime Museum',tourism:'museum',website:'https://www.rmg.co.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
   { type:'node',id:2081,lat:52.1953,lon:-2.2215, tags:{nameZh:'伍斯特博物馆',name:'Worcester City Art Gallery & Museum',tourism:'museum','addr:city':'Worcester',opening_hours:'Tu-Sa 10:30-16:30'}},
@@ -1996,6 +2018,12 @@ async function fetchOverpass(query) {
   throw lastErr || new Error('All Overpass endpoints failed');
 }
 
+// ── RATING HELPERS ───────────────────────────────
+function formatRating(venue) { if (!venue.rating) return null; const r = parseFloat(venue.rating); const fullStars = Math.floor(r); const rem = r % 1; const halfStar = rem >= 0.25 && rem < 0.75; const stars = '\u2605'.repeat(fullStars) + (halfStar ? '\u00BD' : (rem >= 0.75 ? '\u2605' : '')); const count = parseInt(venue.reviews || '0'); const countStr = count >= 1000 ? (count / 1000).toFixed(1) + 'K' : String(count); const countFull = count >= 1000 ? count.toLocaleString() : String(count); return { stars, rating: venue.rating, countShort: countStr, countFull }; }
+function ratingCardHtml(venue) { const r = formatRating(venue); if (!r) return ''; return `<span class="venue-rating"><span class="rating-stars">\u2B50</span> <span class="rating-num">${r.rating}</span> <span class="rating-count">(${r.countShort})</span></span>`; }
+function ratingDetailHtml(venue) { const r = formatRating(venue); if (!r) return ''; return `<div class="detail-rating"><span class="detail-rating-stars">${r.stars}</span><span class="detail-rating-num">${r.rating}</span><span class="detail-rating-sep">\u00B7</span><span class="detail-rating-count">${r.countFull} reviews</span></div>`; }
+function applySortOrder(mode) { state.sortMode = mode; const list = state.filtered; if (mode === 'rating') { list.sort((a, b) => { const ra = parseFloat(a.rating || '0'); const rb = parseFloat(b.rating || '0'); if (rb !== ra) return rb - ra; return (parseInt(b.reviews || '0')) - (parseInt(a.reviews || '0')); }); } else if (mode === 'name') { list.sort((a, b) => a.name.localeCompare(b.name)); } else if (mode === 'distance' && state.userLocation) { list.sort((a, b) => (a._userDist || 9999) - (b._userDist || 9999)); } else { const orderMap = new Map(); state.allVenues.forEach((v, i) => orderMap.set(v.id, i)); list.sort((a, b) => (orderMap.get(a.id) || 0) - (orderMap.get(b.id) || 0)); } state.displayed = 0; renderList(); }
+
 function processOSMData(elements) {
   const venues = []; const seen = new Set();
   for (const el of elements) {
@@ -2011,12 +2039,15 @@ function processOSMData(elements) {
     const city = tags['addr:city'] || tags['addr:town'] || tags['addr:village'] || '';
     const street = [tags['addr:street'], tags['addr:housenumber']].filter(Boolean).join(' ');
     const address = [street, city].filter(Boolean).join(', ');
-    venues.push({ id: `${el.type}/${el.id}`, name, nameZh: tags['name:zh'] || tags['name:zh-Hans'] || tags.nameZh || '', lat, lon, category: cat, website, address, phone: tags.phone || tags['contact:phone'] || '', openingHours: tags.opening_hours || '', osmType: el.type, osmId: el.id });
+    venues.push({ id: `${el.type}/${el.id}`, name, nameZh: tags['name:zh'] || tags['name:zh-Hans'] || tags.nameZh || '', lat, lon, category: cat, website, address, phone: tags.phone || tags['contact:phone'] || '', openingHours: tags.opening_hours || '', rating: tags.rating || '', reviews: tags.reviews || '', osmType: el.type, osmId: el.id });
   }
   venues.sort((a, b) => { if (a.category.id !== 'attraction' && b.category.id === 'attraction') return -1; if (a.category.id === 'attraction' && b.category.id !== 'attraction') return 1; return a.name.localeCompare(b.name); });
   state.allVenues = venues; state.displayed = 0;
   applyFilter(); buildFilterBar();
   document.getElementById('resultCountText').innerHTML = venues.length ? T[LANG.current].found(venues.length, state.currentRegion) : T[LANG.current].notFound;
+  const sortCtrl = document.getElementById('sortControl');
+  if (sortCtrl) { sortCtrl.style.display = venues.length ? 'inline-flex' : 'none'; const sortSel = document.getElementById('sortSelect'); if (sortSel) sortSel.value = 'default'; }
+  state.sortMode = 'default';
   renderCategorySummary();
 }
 
@@ -2030,7 +2061,7 @@ function renderList() {
   toShow.forEach(v => {
     const card = document.createElement('div'); card.className = 'venue-card' + (v.id === state.activeCardId ? ' active' : ''); card.id = 'card-' + v.id.replace(/[^a-z0-9]/gi, '-');
     const isFav = state.favorites.includes(v.id); const distHtml = v._userDist != null ? `<span class="venue-distance">📍 ${v._userDist.toFixed(1)} km</span>` : '';
-    card.innerHTML = `<button class="venue-fav-btn ${isFav ? 'favorited' : ''}" onclick="event.stopPropagation(); toggleFavorite('${v.id.replace(/'/g,"\\'")}', this)" title="${isFav ? 'Remove' : 'Add'}">${isFav ? '❤️' : '♡'}</button><div class="venue-card-top"><div class="venue-icon" style="background:${v.category.bg}">${v.category.emoji}</div><div class="venue-info"><div class="venue-name">${v.name}</div>${v.nameZh ? `<div class="venue-name-zh">${v.nameZh}</div>` : ''}<div class="venue-meta"><span class="venue-tag" style="background:${v.category.bg};color:${v.category.color}">${v.category[LANG.current] || v.category.en}</span>${distHtml}${v.address ? `<span class="venue-address"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="4" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 10 C2 7 0.5 5.5 0.5 4a4.5 4.5 0 019 0c0 1.5-1.5 3-4.5 6z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>${v.address}</span>` : ''}</div>${v.openingHours ? `<div class="venue-detail-row">\u{1F552} ${translateHours(v.openingHours)}</div>` : ''}${v.phone ? `<div class="venue-detail-row">\u{1F4DE} <a href="tel:${v.phone}">${v.phone}</a></div>` : ''}</div></div><div class="venue-actions">${v.website ? `<a class="btn-website" href="${v.website}" target="_blank" rel="noopener">${T[LANG.current].website}</a>` : `<span class="btn-website" style="opacity:.45;cursor:default">${T[LANG.current].noWebsite}</span>`}<a class="btn-nav" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lon}" target="_blank" rel="noopener">${T[LANG.current].navigate}</a><button class="btn-map" onclick="flyToVenue('${v.id}')">${T[LANG.current].flyTo}</button></div>`;
+    card.innerHTML = `<button class="venue-fav-btn ${isFav ? 'favorited' : ''}" onclick="event.stopPropagation(); toggleFavorite('${v.id.replace(/'/g,"\\'")}', this)" title="${isFav ? 'Remove' : 'Add'}">${isFav ? '❤️' : '♡'}</button><div class="venue-card-top"><div class="venue-icon" style="background:${v.category.bg}">${v.category.emoji}</div><div class="venue-info"><div class="venue-name">${v.name}</div>${v.nameZh ? `<div class="venue-name-zh">${v.nameZh}</div>` : ''}${ratingCardHtml(v)}<div class="venue-meta"><span class="venue-tag" style="background:${v.category.bg};color:${v.category.color}">${v.category[LANG.current] || v.category.en}</span>${distHtml}${v.address ? `<span class="venue-address"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="4" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 10 C2 7 0.5 5.5 0.5 4a4.5 4.5 0 019 0c0 1.5-1.5 3-4.5 6z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>${v.address}</span>` : ''}</div>${v.openingHours ? `<div class="venue-detail-row">\u{1F552} ${translateHours(v.openingHours)}</div>` : ''}${v.phone ? `<div class="venue-detail-row">\u{1F4DE} <a href="tel:${v.phone}">${v.phone}</a></div>` : ''}</div></div><div class="venue-actions">${v.website ? `<a class="btn-website" href="${v.website}" target="_blank" rel="noopener">${T[LANG.current].website}</a>` : `<span class="btn-website" style="opacity:.45;cursor:default">${T[LANG.current].noWebsite}</span>`}<a class="btn-nav" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lon}" target="_blank" rel="noopener">${T[LANG.current].navigate}</a><button class="btn-map" onclick="flyToVenue('${v.id}')">${T[LANG.current].flyTo}</button></div>`;
     card.addEventListener('click', e => { if (e.target.closest('a,button')) return; selectVenue(v.id); });
     frag.appendChild(card);
   });
@@ -2206,6 +2237,7 @@ function openDetailPanel(venueId) {
   html += `<div class="detail-venue-name">${escapeHtml(v.name)}</div>`;
   if (v.nameZh) html += `<div class="detail-venue-name-zh">${escapeHtml(v.nameZh)}</div>`;
   html += `<span class="detail-category-badge" style="background:${v.category.bg};color:${v.category.color}">${v.category.emoji} ${v.category[LANG.current] || v.category.en}</span>`;
+  html += ratingDetailHtml(v);
   if (v.address) html += `<div class="detail-info-row"><span class="detail-icon">📍</span><span>${escapeHtml(v.address)}</span></div>`;
   if (v.openingHours) html += `<div class="detail-info-row"><span class="detail-icon">\u{1F552}</span><span>${escapeHtml(translateHours(v.openingHours))}</span></div>`;
   if (v.phone) html += `<div class="detail-info-row"><span class="detail-icon">\u{1F4DE}</span><a href="tel:${v.phone}">${escapeHtml(v.phone)}</a></div>`;
