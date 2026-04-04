@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UK Kids Explorer &middot; 英国亲子探索</title>
+  <meta name="description" content="Family-friendly venues across the UK. Interactive bilingual map for families with kids. 英国亲子友好场地互动地图。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧒</text></svg>">
+  <link rel="canonical" href="https://xinaliu2134.github.io/uk-kids-explorer/">
+  <meta property="og:title" content="UK Kids Explorer &middot; 英国亲子探索">
+  <meta property="og:description" content="Family-friendly venues across the UK. Interactive bilingual map for families with kids. 英国亲子友好场地互动地图。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://xinaliu2134.github.io/uk-kids-explorer/">
+  <meta property="og:site_name" content="UK Kids Explorer">
+  <meta name="twitter:card" content="summary">
+  <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Noto+Sans+SC:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <style>
+    :root {
+      --bg:           #F2F4F8;
+      --surface:      #FFFFFF;
+      --primary:      #E05A1E;
+      --primary-light:#FFF0E9;
+      --primary-dark: #B84515;
+      --navy:         #1A2B4A;
+      --teal:         #0EA5A0;
+      --text:         #1A2B4A;
+      --text-secondary: #5A6A84;
+      --text-muted:   #9AA5B8;
+      --border:       #CBD5E1;
+      --border-light: #E2E8F0;
+      --shadow-sm:    0 1px 3px rgba(26,43,74,.12), 0 0 0 1px rgba(26,43,74,.04);
+      --shadow-md:    0 4px 12px rgba(26,43,74,.16), 0 0 0 1px rgba(26,43,74,.06);
+      --shadow-lg:    0 8px 24px rgba(26,43,74,.20), 0 0 0 1px rgba(26,43,74,.08);
+      --radius-sm:    6px;
+      --radius-md:    12px;
+      --radius-lg:    18px;
+      --radius-xl:    24px;
+      font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .cross-nav {
+      background: #111827;
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+      z-index: 101;
+      flex-wrap: wrap;
+    }
+    .cross-nav a {
+      color: rgba(255,255,255,.6);
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .cross-nav a:hover { color: #fff; }
+    .cross-nav .active-site {
+      color: #fff;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 1px;
+    }
+
+    header {
+      background: var(--navy);
+      padding: 0 20px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .logo-text-en {
+      font-size: 13px; font-weight: 700;
+      color: #FFFFFF; letter-spacing: .5px;
+    }
+    .logo-text-zh {
+      font-size: 11px; font-weight: 400;
+      color: rgba(255,255,255,.55);
+    }
+
+    .header-search {
+      flex: 1;
+      max-width: 480px;
+      position: relative;
+    }
+    .header-search input {
+      width: 100%;
+      background: rgba(255,255,255,.12);
+      border: 2px solid rgba(255,255,255,.2);
+      border-radius: var(--radius-md);
+      padding: 8px 40px 8px 36px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      transition: background .2s, border-color .2s;
+    }
+    .header-search input::placeholder { color: rgba(255,255,255,.5); }
+    .header-search input:focus {
+      background: rgba(255,255,255,.18);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(224,90,30,.25);
+    }
+    .header-search .search-icon {
+      position: absolute; left: 10px; top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,.45); font-size: 15px;
+      pointer-events: none;
+    }
+    .header-search .clear-btn {
+      position: absolute; right: 8px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: rgba(255,255,255,.4); font-size: 16px;
+      padding: 2px 4px; display: none;
+      transition: color .15s;
+    }
+    .header-search .clear-btn:hover { color: rgba(255,255,255,.8); }
+    .header-search input:not(:placeholder-shown) ~ .clear-btn { display: block; }
+
+    .autocomplete {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      max-height: 240px; overflow-y: auto;
+      z-index: 200; display: none;
+    }
+    .autocomplete.open { display: block; }
+    .autocomplete-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+      transition: background .12s;
+    }
+    .autocomplete-item:hover, .autocomplete-item.focused {
+      background: var(--primary-light);
+    }
+    .autocomplete-item .region-type {
+      margin-left: auto;
+      font-size: 11px; color: var(--text-muted);
+    }
+
+    .header-spacer { flex: 1; }
+
+    .lang-toggle {
+      display: flex;
+      background: rgba(255,255,255,.1);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .lang-btn {
+      background: none; border: none; cursor: pointer;
+      color: rgba(255,255,255,.5);
+      font-size: 12px; font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: background .15s, color .15s;
+    }
+    .lang-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .filter-bar {
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      padding: 0 20px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .filter-label {
+      font-size: 12px; font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .filter-chip {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 12px; font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all .15s;
+      user-select: none;
+    }
+    .filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+    .filter-chip.active {
+      color: #fff;
+      border-color: transparent;
+    }
+    .filter-chip.no-data {
+      opacity: 0.45;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 2px solid var(--border);
+    }
+
+    .sidebar-header {
+      padding: 16px 20px 12px;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .result-count {
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .result-count strong { color: var(--text); }
+
+    .venue-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      contain: layout style;
+      will-change: scroll-position;
+    }
+    .venue-list::-webkit-scrollbar { width: 4px; }
+    .venue-list::-webkit-scrollbar-track { background: transparent; }
+    .venue-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .venue-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      border: none;
+      cursor: pointer;
+      transition: box-shadow .15s, transform .12s;
+      box-shadow: var(--shadow-sm);
+      contain: content;
+      position: relative;
+    }
+    .venue-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    .venue-card.active {
+      box-shadow: 0 0 0 2px var(--primary), var(--shadow-md);
+    }
+
+    .venue-card-top {
+      display: flex; align-items: flex-start; gap: 11px;
+    }
+    .venue-icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .venue-info { flex: 1; min-width: 0; }
+    .venue-name {
+      font-size: 14px; font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .venue-name-zh {
+      font-size: 12px; color: var(--text-secondary);
+      margin-top: 2px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+    }
+    .venue-meta {
+      margin-top: 8px;
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap;
+    }
+    .venue-tag {
+      font-size: 11px; font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .venue-address {
+      font-size: 11px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 4px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .venue-address svg { flex-shrink: 0; }
+
+    .venue-actions {
+      margin-top: 10px;
+      display: flex; gap: 6px;
+    }
+    .btn-website {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: none; border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-website:hover { background: #fde0cd; }
+    .btn-map {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-map:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-nav {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600;
+      color: #fff;
+      background: #4285F4;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-nav:hover { background: #3367D6; }
+
+    .load-more-btn {
+      margin: 8px 0 16px;
+      width: 100%;
+      padding: 10px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 13px; font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .load-more-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg) 25%, #f0f2f5 50%, var(--bg) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skeleton-card { padding: 14px; }
+
+    .empty-state {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+      gap: 12px;
+    }
+    .empty-state-icon { font-size: 48px; }
+    .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text); }
+    .empty-state p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .empty-suggestions {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .empty-suggestion {
+      background: var(--primary-light); color: var(--primary);
+      border: none; border-radius: 20px;
+      padding: 5px 14px; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: background .15s;
+    }
+    .empty-suggestion:hover { background: #fde0cd; }
+
+    #map {
+      width: 100%; height: 100%;
+      z-index: 1;
+    }
+
+    .leaflet-popup-content-wrapper {
+      border-radius: var(--radius-md) !important;
+      box-shadow: var(--shadow-lg) !important;
+      border: 2px solid var(--border);
+      padding: 0 !important;
+      overflow: hidden;
+    }
+    .leaflet-popup-content {
+      margin: 0 !important;
+      width: 260px !important;
+    }
+    .leaflet-popup-tip-container { margin-top: -1px; }
+
+    .popup-content { padding: 14px; }
+    .popup-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    }
+    .popup-icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .popup-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; }
+    .popup-name-zh { font-size: 12px; color: var(--text-secondary); }
+    .popup-address {
+      font-size: 12px; color: var(--text-muted);
+      margin-bottom: 10px; line-height: 1.4;
+    }
+    .popup-website {
+      display: block; text-align: center;
+      background: var(--primary); color: white;
+      border-radius: 8px; padding: 7px;
+      font-size: 12px; font-weight: 600;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .popup-website:hover { background: var(--primary-dark); }
+
+    .map-marker {
+      width: 34px; height: 34px;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      border: 2.5px solid #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.1);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: transform .2s;
+    }
+    .map-marker:hover {
+      transform: rotate(-45deg) scale(1.3);
+      z-index: 1000 !important;
+    }
+    .map-marker-inner {
+      transform: rotate(45deg);
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .map-overlay {
+      position: absolute; inset: 0;
+      background: rgba(242,244,248,.85);
+      backdrop-filter: blur(4px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 500; gap: 12px;
+      transition: opacity .3s;
+    }
+    .map-overlay.hidden { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .map-overlay p { font-size: 14px; color: var(--text-secondary); }
+
+    .map-wrapper { position: relative; }
+
+    .toast {
+      position: fixed;
+      top: 76px; left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: var(--navy);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 13px; font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s, transform .25s;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .scroll-top-btn {
+      position: absolute;
+      bottom: 18px; right: 18px;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      font-size: 18px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      transition: background .15s, transform .15s;
+    }
+    .scroll-top-btn:hover { background: var(--primary-dark); transform: scale(1.1); }
+    .scroll-top-btn.visible { display: flex; }
+
+    .venue-detail-row {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 4px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .venue-detail-row a {
+      color: var(--primary); text-decoration: none;
+    }
+    .venue-detail-row a:hover { text-decoration: underline; }
+
+    .category-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .category-summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    .filter-chip-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 0 5px;
+      line-height: 1;
+    }
+    .filter-chip:not(.active) .filter-chip-count {
+      background: var(--bg);
+      color: var(--text-secondary);
+    }
+    .filter-chip.active .filter-chip-count {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+
+    .venue-fav-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: none; border: none;
+      font-size: 20px; cursor: pointer;
+      opacity: 0.5; transition: opacity .15s, transform .15s;
+      line-height: 1; padding: 2px;
+      z-index: 2;
+    }
+    .venue-fav-btn:hover { opacity: 0.8; }
+    .venue-fav-btn.favorited { opacity: 1; }
+    .venue-fav-btn.bounce {
+      animation: favBounce .35s ease;
+    }
+    @keyframes favBounce {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+
+    .venue-distance {
+      font-size: 11px; color: var(--teal); font-weight: 600;
+      display: inline-flex; align-items: center; gap: 3px;
+    }
+
+    .nearme-btn {
+      background: none; border: none;
+      color: rgba(255,255,255,.5);
+      font-size: 20px; cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: color .15s, background .15s;
+      flex-shrink: 0;
+    }
+    .nearme-btn:hover { color: #fff; background: rgba(255,255,255,.1); }
+    .nearme-btn.active { color: #4FC3F7; }
+
+    .autocomplete-item .venue-result-detail {
+      font-size: 11px; color: var(--text-muted);
+      margin-left: 4px;
+    }
+    .autocomplete-item .venue-emoji {
+      font-size: 16px; flex-shrink: 0;
+    }
+    .autocomplete-section-label {
+      padding: 6px 14px 2px;
+      font-size: 10px; font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    @media (max-width: 768px) {
+      .header-search { max-width: 100%; }
+      .logo-text { display: none; }
+    }
+
+    .chat-fab {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #F39C12);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 16px rgba(224,90,30,.4);
+      cursor: pointer;
+      font-size: 24px;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9000;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(224,90,30,.5); }
+    .chat-fab.hidden { display: none; }
+
+    .chat-panel {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      width: 380px;
+      max-height: 520px;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 12px 48px rgba(26,43,74,.25);
+      z-index: 9001;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-panel.open { display: flex; }
+
+    .chat-header {
+      background: var(--navy);
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .chat-header-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--primary), #F39C12);
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 16px;
+    }
+    .chat-header-text {
+      flex: 1;
+      color: #fff;
+      font-size: 14px; font-weight: 700;
+    }
+    .chat-header-sub {
+      color: rgba(255,255,255,.5);
+      font-size: 11px; font-weight: 400;
+    }
+    .chat-close {
+      background: none; border: none;
+      color: rgba(255,255,255,.5);
+      font-size: 20px; cursor: pointer;
+      padding: 4px;
+      transition: color .15s;
+    }
+    .chat-close:hover { color: #fff; }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 200px;
+      max-height: 340px;
+    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .chat-msg {
+      max-width: 88%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .chat-msg.bot {
+      background: var(--bg);
+      color: var(--text);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .chat-msg.user {
+      background: var(--primary);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-msg.bot a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .chat-msg.bot a:hover { text-decoration: underline; }
+
+    .chat-venue-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 8px;
+      margin: 3px 2px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .chat-venue-chip:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .chat-typing {
+      align-self: flex-start;
+      padding: 10px 14px;
+      background: var(--bg);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      display: flex; gap: 4px;
+    }
+    .chat-typing span {
+      width: 6px; height: 6px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: typingBounce .8s ease-in-out infinite;
+    }
+    .chat-typing span:nth-child(2) { animation-delay: .15s; }
+    .chat-typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes typingBounce {
+      0%,60%,100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+
+    .chat-quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 16px 8px;
+    }
+    .chat-quick-btn {
+      background: var(--primary-light);
+      color: var(--primary);
+      border: none;
+      border-radius: 16px;
+      padding: 6px 12px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .chat-quick-btn:hover { background: #fde0cd; }
+
+    .chat-input-area {
+      padding: 12px 16px;
+      border-top: 2px solid var(--border-light);
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+    .chat-input:focus { border-color: var(--primary); }
+    .chat-input::placeholder { color: var(--text-muted); }
+    .chat-send {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .chat-send:hover { background: var(--primary-dark); }
+
+    @media (max-width: 768px) {
+      .chat-panel { width: calc(100vw - 24px); right: 12px; bottom: 12px; max-height: 70vh; }
+      .chat-fab { bottom: 16px; right: 16px; width: 50px; height: 50px; font-size: 22px; }
+    }
+
+    @media (max-width: 768px) {
+      .main { grid-template-columns: 1fr; grid-template-rows: 1fr; position: relative; }
+      .map-wrapper { order: -1; grid-row: 1; grid-column: 1; }
+      .sidebar {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        z-index: 800;
+        border-radius: 16px 16px 0 0;
+        border-right: none;
+        border-top: none;
+        box-shadow: 0 -4px 24px rgba(26,43,74,.18);
+        transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+        max-height: 90dvh;
+        will-change: transform;
+      }
+      .bottom-sheet-handle {
+        display: flex;
+        justify-content: center;
+        padding: 10px 0 4px;
+        cursor: grab;
+        flex-shrink: 0;
+      }
+      .bottom-sheet-handle::after {
+        content: '';
+        width: 36px; height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+      }
+      .bottom-sheet-handle:active { cursor: grabbing; }
+    }
+    @media (min-width: 769px) {
+      .bottom-sheet-handle { display: none; }
+    }
+
+    .venue-detail-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 400px;
+      background: var(--surface);
+      box-shadow: -4px 0 24px rgba(26,43,74,.18);
+      z-index: 900;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .venue-detail-panel.open { transform: translateX(0); }
+    .detail-panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 2px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .detail-panel-close {
+      background: none; border: none; cursor: pointer;
+      font-size: 22px; color: var(--text-secondary);
+      padding: 4px 8px; border-radius: 8px;
+      transition: background .15s;
+    }
+    .detail-panel-close:hover { background: var(--bg); }
+    .detail-panel-body {
+      flex: 1; overflow-y: auto; padding: 20px;
+    }
+    .detail-venue-icon {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+    .detail-venue-name {
+      font-size: 20px; font-weight: 700; color: var(--text);
+      line-height: 1.3; margin-bottom: 4px;
+    }
+    .detail-venue-name-zh {
+      font-size: 15px; color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .detail-category-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .detail-info-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 14px; color: var(--text);
+    }
+    .detail-info-row .detail-icon {
+      font-size: 16px; flex-shrink: 0; width: 20px; text-align: center;
+      padding-top: 1px;
+    }
+    .detail-info-row a { color: var(--primary); text-decoration: none; }
+    .detail-info-row a:hover { text-decoration: underline; }
+    .detail-actions {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-top: 20px;
+    }
+    .detail-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none;
+      text-decoration: none;
+      transition: background .15s, transform .1s;
+    }
+    .detail-btn:hover { transform: translateY(-1px); }
+    .detail-btn:active { transform: translateY(0); }
+    .detail-btn-website {
+      background: var(--primary); color: #fff;
+    }
+    .detail-btn-website:hover { background: var(--primary-dark); }
+    .detail-btn-navigate {
+      background: #4285F4; color: #fff;
+    }
+    .detail-btn-navigate:hover { background: #3367D6; }
+    .detail-btn-favorite {
+      background: var(--bg); color: var(--text);
+      border: 2px solid var(--border);
+    }
+    .detail-btn-favorite:hover { border-color: var(--primary); color: var(--primary); }
+    .detail-btn-favorite.favorited {
+      background: #FEE2E2; color: #DC2626; border-color: #FECACA;
+    }
+
+    @media (max-width: 768px) {
+      .venue-detail-panel {
+        width: 100%; top: auto; bottom: 0;
+        max-height: 90dvh;
+        border-radius: 16px 16px 0 0;
+        transform: translateY(100%);
+      }
+      .venue-detail-panel.open { transform: translateY(0); }
+    }
+
+    .age-filter-group {
+      display: flex; align-items: center; gap: 4px;
+      flex-shrink: 0;
+      margin-left: 4px;
+      padding-left: 8px;
+      border-left: 2px solid var(--border-light);
+    }
+    .age-pill {
+      display: flex; align-items: center; gap: 3px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all .15s;
+      user-select: none;
+    }
+    .age-pill:hover { border-color: var(--primary); color: var(--primary); }
+    .age-pill.active {
+      background: #7C3AED; color: #fff;
+      border-color: #7C3AED;
+    }
+
+    .weather-badge {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 600;
+      color: rgba(255,255,255,.8);
+      background: rgba(255,255,255,.1);
+      border-radius: 8px;
+      padding: 4px 10px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .weather-banner {
+      background: linear-gradient(135deg, #1e3a5f, #2d5a8e);
+      color: #fff;
+      padding: 8px 20px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 13px; font-weight: 500;
+      flex-shrink: 0;
+      z-index: 99;
+    }
+    .weather-banner-text { flex: 1; }
+    .weather-banner-btn {
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      border: none; border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .weather-banner-btn:hover { background: rgba(255,255,255,.3); }
+    .weather-banner-close {
+      background: none; border: none;
+      color: rgba(255,255,255,.6);
+      font-size: 18px; cursor: pointer;
+      padding: 2px 6px;
+      transition: color .15s;
+    }
+    .weather-banner-close:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+<div class="cross-nav">
+  <a href="https://xinaliu2134.github.io/nana-hub/holland-kids-explorer.html">Holland 🇳🇱</a>
+  <span style="color:rgba(255,255,255,.25)">|</span>
+  <a href="https://xinaliu2134.github.io/belgium-kids-explorer/">Belgium 🇧🇪</a>
+  <span style="color:rgba(255,255,255,.25)">|</span>
+  <a href="https://xinaliu2134.github.io/germany-kids-explorer/">Germany 🇩🇪</a>
+  <span style="color:rgba(255,255,255,.25)">|</span>
+  <a href="https://xinaliu2134.github.io/france-kids-explorer/">France 🇫🇷</a>
+  <span style="color:rgba(255,255,255,.25)">|</span>
+  <a href="https://xinaliu2134.github.io/portugal-kids-explorer/">Portugal 🇵🇹</a>
+  <span style="color:rgba(255,255,255,.25)">|</span>
+  <a href="https://xinaliu2134.github.io/spain-kids-explorer/">Spain 🇪🇸</a>
+  <span style="color:rgba(255,255,255,.25)">|</span>
+  <a href="https://xinaliu2134.github.io/italy-kids-explorer/">Italy 🇮🇹</a>
+  <span style="color:rgba(255,255,255,.25)">|</span>
+  <span class="active-site">UK 🇬🇧</span>
+  <span style="color:rgba(255,255,255,.25)">|</span>
+  <a href="https://xinaliu2134.github.io/switzerland-kids-explorer/">Switzerland 🇨🇭</a>
+</div>
+
+<header>
+  <a class="logo" href="#" onclick="event.preventDefault(); resetHome();">
+    <div class="logo-icon">🧒</div>
+    <div class="logo-text">
+      <span class="logo-text-en">UK Kids Explorer</span>
+      <span class="logo-text-zh">英国亲子探索</span>
+    </div>
+  </a>
+
+  <div class="header-search">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search venue or region..." autocomplete="off">
+    <button class="clear-btn" id="clearBtn" onclick="clearSearch()">&#10005;</button>
+    <div class="autocomplete" id="autocomplete"></div>
+  </div>
+  <button class="nearme-btn" id="nearmeBtn" onclick="activateNearMe()" title="Near Me 我附近">📍</button>
+
+  <div class="weather-badge" id="weatherBadge" style="display:none;"></div>
+
+  <div class="header-spacer"></div>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
+  </div>
+</header>
+
+<div class="weather-banner" id="weatherBanner" style="display:none;">
+  <span class="weather-banner-text" id="weatherBannerText"></span>
+  <button class="weather-banner-btn" id="weatherBannerBtn" onclick="filterIndoorWeather()"></button>
+  <button class="weather-banner-close" onclick="dismissWeatherBanner()">&times;</button>
+</div>
+
+<div class="filter-bar" id="filterBar">
+  <span class="filter-label" id="filterLabel">Filter:</span>
+</div>
+
+<div class="main">
+
+  <div class="toast" id="toast"></div>
+
+  <aside class="sidebar" id="sidebarSheet" style="position:relative;">
+    <div class="bottom-sheet-handle" id="bottomSheetHandle"></div>
+    <div class="sidebar-header">
+      <div class="result-count" id="resultCount">
+        <span id="resultCountText">Search a region to discover kids venues</span>
+      </div>
+      <div class="category-summary" id="categorySummary"></div>
+    </div>
+    <div class="empty-state" id="emptyState">
+      <div class="empty-state-icon">🗺️</div>
+      <h3 id="emptyTitle">Explore the UK</h3>
+      <p id="emptyDesc">Search a region or city above to find museums, playgrounds, zoos, theme parks and more for kids.</p>
+      <div class="empty-suggestions">
+        <button class="empty-suggestion" onclick="searchRegion('London')">London</button>
+        <button class="empty-suggestion" onclick="searchRegion('Edinburgh')">Edinburgh</button>
+        <button class="empty-suggestion" onclick="searchRegion('Manchester')">Manchester</button>
+        <button class="empty-suggestion" onclick="searchRegion('Bath')">Bath</button>
+        <button class="empty-suggestion" onclick="searchRegion('York')">York</button>
+        <button class="empty-suggestion" onclick="searchRegion('Cardiff')">Cardiff</button>
+      </div>
+    </div>
+    <div class="venue-list" id="venueList" style="display:none"></div>
+    <button class="scroll-top-btn" id="scrollTopBtn" title="Scroll to top">&#8593;</button>
+  </aside>
+
+  <div class="map-wrapper">
+    <div id="map"></div>
+    <div class="map-overlay hidden" id="mapOverlay">
+      <div class="spinner"></div>
+      <p id="loadingText">Loading venues...</p>
+      <p id="loadingHint" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></p>
+    </div>
+  </div>
+
+</div>
+
+<div class="venue-detail-panel" id="venueDetailPanel">
+  <div class="detail-panel-header">
+    <span style="font-weight:700;font-size:15px;" id="detailPanelTitle">Venue Details</span>
+    <button class="detail-panel-close" onclick="closeDetailPanel()">&times;</button>
+  </div>
+  <div class="detail-panel-body" id="detailPanelBody"></div>
+</div>
+
+<button class="chat-fab" id="chatFab" onclick="toggleChat(true)" title="AI Assistant">🧸</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <div class="chat-header-icon">🧸</div>
+    <div>
+      <div class="chat-header-text">Kids Explorer AI</div>
+      <div class="chat-header-sub" id="chatSubtitle">智能亲子出行助手</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat(false)">&#10005;</button>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-quick-actions" id="chatQuickActions"></div>
+  <div class="chat-input-area">
+    <input class="chat-input" id="chatInput" placeholder="Describe what you need... e.g. indoor play near London, kids age 3" autocomplete="off">
+    <button class="chat-send" id="chatSend" onclick="handleChatSend()">&#10148;</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV" crossorigin="anonymous">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" integrity="sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr" crossorigin="anonymous"></script>
+<style>
+  .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+    background: rgba(224,90,30,.15) !important;
+  }
+  .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+    background: var(--primary) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+  }
+</style>
+<script>
+const LANG = { current: 'en' };
+
+const T = {
+  en: {
+    filterLabel: 'Category:',
+    allLabel: 'All',
+    searching: 'Searching... (may take 10-40s)',
+    loadingVenues: 'Loading venues...',
+    loadingHint: 'Querying OpenStreetMap, usually 10-40s',
+    found: (n, region) => `<strong>${n}</strong> venues in <strong>${region}</strong>`,
+    notFound: 'No venues found. Try a different region.',
+    emptyTitle: 'Explore the UK',
+    emptyDesc: 'Search a region or city above to find museums, playgrounds, zoos, theme parks and more for kids.',
+    noWebsite: 'No website',
+    website: '🔗 Official Website',
+    navigate: '🧭 Navigate',
+    flyTo: '📍 Show on map',
+    loadMore: 'Load more',
+    regionNotFound: 'Region not found. Try a UK city or region name.',
+    searchPlaceholder: 'Search venue or region... e.g. Legoland, London',
+    resultLabel: 'Search a region to discover kids venues',
+    favoritesLabel: 'Favorites',
+    nearMe: 'Near Me',
+    nearMeSearching: 'Getting your location...',
+    nearMePermDenied: 'Location access denied. Enable it in browser settings to use Near Me.',
+    nearMeError: 'Could not get your location. Please try again.',
+    weatherBannerText: 'Rainy? Try indoor activities!',
+    weatherBannerBtn: 'Show indoor venues',
+    searchRegionFirst: 'Search a region first',
+    searchRegionFirstDesc: (catName) => `Type a city or region in the search bar above, then filter by "${catName}"`,
+    browseCategory: (catName) => `Search a region to browse ${catName}`,
+    browseCategoryDesc: 'Type a city or region above - results will be filtered to this category.',
+    noInRegion: (catName, region) => `No ${catName} in ${region}`,
+    tryOtherCategory: 'Try a different category or search another region.',
+    venuesSection: 'Venues',
+    regionsSection: 'Regions',
+    nearMeLocationType: 'Location',
+    featuredRegion: 'Featured UK Venues',
+    allCountry: 'All UK',
+    allCountryCat: (catName) => `${catName} - All UK`,
+    yourLocation: 'Your location',
+    sortedByDistance: 'Sorted by distance',
+    showingIndoor: 'Showing indoor venues',
+    venueDetails: 'Venue Details',
+    visitWebsite: 'Visit Website',
+    navigateTo: 'Navigate',
+    favorited: 'Favourited',
+    addFavorite: 'Add to Favourites',
+  },
+  zh: {
+    filterLabel: '种类：',
+    allLabel: '全部',
+    searching: '搜索中... (通常需要10-40秒)',
+    loadingVenues: '正在加载场地...',
+    loadingHint: '正在查询 OpenStreetMap，通常需要 10-40 秒',
+    found: (n, region) => `<strong>${region}</strong> 共找到 <strong>${n}</strong> 个亲子场地`,
+    notFound: '未找到相关场地，请尝试其他地区。',
+    emptyTitle: '探索英国亲子场地',
+    emptyDesc: '在上方搜索地区或城市，找到博物馆、游乐场、动物园、主题公园等亲子活动场所。',
+    noWebsite: '暂无官网',
+    website: '🔗 官方网站',
+    navigate: '🧭 导航',
+    flyTo: '📍 在地图上显示',
+    loadMore: '加载更多',
+    regionNotFound: '未找到该地区，请输入英国城市或地区名称。',
+    searchPlaceholder: '搜索场地或地区... 如 伦敦, London',
+    resultLabel: '搜索地区以发现亲子场地',
+    favoritesLabel: '收藏',
+    nearMe: '我附近',
+    nearMeSearching: '正在获取位置...',
+    nearMePermDenied: '位置访问被拒绝，请在浏览器设置中允许以使用"我附近"功能。',
+    nearMeError: '无法获取位置，请重试。',
+    weatherBannerText: '下雨天？试试室内活动！',
+    weatherBannerBtn: '查看室内场地',
+    searchRegionFirst: '请先搜索地区',
+    searchRegionFirstDesc: (catName) => `在上方搜索框输入城市或地区，再按「${catName}」筛选`,
+    browseCategory: (catName) => `搜索地区，查看全部${catName}`,
+    browseCategoryDesc: '在上方搜索框输入城市或地区，立即筛选该种类',
+    noInRegion: (catName, region) => `${region} 暂无${catName}`,
+    tryOtherCategory: '试试其他分类，或搜索其他地区。',
+    venuesSection: '场地',
+    regionsSection: '地区',
+    nearMeLocationType: '定位',
+    featuredRegion: '英国精选场地',
+    allCountry: '英国全境',
+    allCountryCat: (catName) => `${catName} - 英国全境`,
+    yourLocation: '你的位置',
+    sortedByDistance: '已按距离排序',
+    showingIndoor: '已筛选室内活动场地',
+    venueDetails: '场地详情',
+    visitWebsite: '访问官方网站',
+    navigateTo: '导航前往',
+    favorited: '已收藏',
+    addFavorite: '收藏',
+  },
+};
+
+const CATEGORIES = [
+  { id: 'museum',     emoji: '🏛️', color: '#4ECDC4', bg: '#E8FAF8', en: 'Museum', zh: '博物馆', tags: { tourism: ['museum', 'gallery'] } },
+  { id: 'aquarium',   emoji: '🐠', color: '#0077B6', bg: '#E0F4FF', en: 'Aquarium', zh: '水族馆', tags: { tourism: ['aquarium'] } },
+  { id: 'zoo',        emoji: '🦁', color: '#82B74B', bg: '#EEF7E6', en: 'Zoo', zh: '动物园', tags: { tourism: ['zoo'] } },
+  { id: 'children_farm', emoji: '🐑', color: '#A0C878', bg: '#F0F7E6', en: "Children's Farm", zh: '儿童农场', tags: { tourism: ['children_farm'] } },
+  { id: 'theme_park', emoji: '🎡', color: '#E05A1E', bg: '#FFF0E9', en: 'Theme Park', zh: '主题公园', tags: { tourism: ['theme_park'], leisure: ['water_park', 'amusement_arcade'] } },
+  { id: 'indoor_playground', emoji: '🏠', color: '#FF6B35', bg: '#FFF0E9', en: 'Indoor Play', zh: '室内游乐场', tags: { leisure: ['indoor_playground'] } },
+  { id: 'playground', emoji: '🛝', color: '#F7DC6F', bg: '#FEFCE8', en: 'Playground', zh: '游乐场', tags: { leisure: ['playground'] } },
+  { id: 'beach',      emoji: '🏖️', color: '#0EA5A0', bg: '#E0F7F6', en: 'Beach', zh: '海滩', tags: { natural: ['beach'] } },
+  { id: 'nature',     emoji: '🌳', color: '#27AE60', bg: '#E8F8EE', en: 'Nature & Park', zh: '自然公园', tags: { leisure: ['nature_reserve', 'park', 'miniature_golf', 'marina'] } },
+  { id: 'historic',   emoji: '🏰', color: '#8B6914', bg: '#F5EDD5', en: 'Historic', zh: '历史古迹', tags: { historic: ['castle', 'monument', 'fort', 'ruins', 'windmill', 'ship'] } },
+  { id: 'sports',     emoji: '⛸️', color: '#6C5CE7', bg: '#F0EEFF', en: 'Sports', zh: '运动场', tags: { leisure: ['ice_rink', 'swimming_pool', 'sports_centre'] } },
+  { id: 'theatre',    emoji: '🎭', color: '#E84393', bg: '#FEE9F4', en: 'Theatre & Cinema', zh: '剧院影院', tags: { amenity: ['theatre', 'cinema', 'arts_centre'] } },
+  { id: 'visitor',    emoji: '🔭', color: '#0369A1', bg: '#E0F2FE', en: 'Visitor Centre', zh: '游客中心', tags: { tourism: ['visitor_centre'] } },
+  { id: 'attraction', emoji: '⭐', color: '#F39C12', bg: '#FEF5E7', en: 'Attraction', zh: '景点', tags: { tourism: ['attraction'] } },
+  { id: 'chinese_restaurant', emoji: '🥡', color: '#E74C3C', bg: '#FADBD8', en: 'Chinese Restaurant', zh: '中餐厅', tags: { amenity: ['chinese_restaurant'] } },
+  { id: 'buffet', emoji: '🍱', color: '#8E44AD', bg: '#F4ECF7', en: 'Buffet / All-You-Can-Eat', zh: '自助餐', tags: { amenity: ['buffet_restaurant'] } },
+];
+
+const UK_REGIONS = [
+  // Top-level
+  { name: 'England', type: 'province' },
+  { name: 'Scotland', type: 'province' },
+  { name: 'Wales', type: 'province' },
+  { name: 'Northern Ireland', type: 'province' },
+  // Cities
+  { name: 'London', nameZh: '伦敦', type: 'city' },
+  { name: 'Edinburgh', nameZh: '爱丁堡', type: 'city' },
+  { name: 'Manchester', nameZh: '曼彻斯特', type: 'city' },
+  { name: 'Birmingham', nameZh: '伯明翰', type: 'city' },
+  { name: 'Liverpool', nameZh: '利物浦', type: 'city' },
+  { name: 'Bristol', nameZh: '布里斯托尔', type: 'city' },
+  { name: 'Oxford', nameZh: '牛津', type: 'city' },
+  { name: 'Cambridge', nameZh: '剑桥', type: 'city' },
+  { name: 'Bath', nameZh: '巴斯', type: 'city' },
+  { name: 'York', nameZh: '约克', type: 'city' },
+  { name: 'Brighton', nameZh: '布莱顿', type: 'city' },
+  { name: 'Canterbury', nameZh: '坎特伯雷', type: 'city' },
+  { name: 'Stratford-upon-Avon', nameZh: '斯特拉特福', type: 'city' },
+  { name: 'Glasgow', nameZh: '格拉斯哥', type: 'city' },
+  { name: 'Cardiff', nameZh: '卡迪夫', type: 'city' },
+  { name: 'Belfast', nameZh: '贝尔法斯特', type: 'city' },
+  { name: 'Stonehenge', type: 'city' },
+  { name: 'Lake District', type: 'city' },
+  { name: 'Cotswolds', type: 'city' },
+  { name: 'Cornwall', type: 'city' },
+  { name: 'Windsor', nameZh: '温莎', type: 'city' },
+  { name: 'Leeds', nameZh: '利兹', type: 'city' },
+  { name: 'Sheffield', nameZh: '谢菲尔德', type: 'city' },
+  { name: 'Nottingham', nameZh: '诺丁汉', type: 'city' },
+  { name: 'Newcastle', nameZh: '纽卡斯尔', type: 'city' },
+  { name: 'Aberdeen', nameZh: '阿伯丁', type: 'city' },
+  { name: 'Inverness', nameZh: '因弗内斯', type: 'city' },
+  { name: 'Bournemouth', nameZh: '伯恩茅斯', type: 'city' },
+  { name: 'Scarborough', nameZh: '斯卡伯勒', type: 'city' },
+  { name: 'Blackpool', nameZh: '布莱克浦', type: 'city' },
+  { name: 'Pembrokeshire', type: 'city' },
+  { name: 'Peak District', type: 'city' },
+  { name: 'Snowdonia', type: 'city' },
+  { name: 'Highlands', type: 'city' },
+  { name: 'New Forest', type: 'city' },
+  { name: 'Colchester', nameZh: '科尔切斯特', type: 'city' },
+  { name: 'Chester', nameZh: '切斯特', type: 'city' },
+  { name: 'Halifax', nameZh: '哈利法克斯', type: 'city' },
+];
+
+// -- STATIC VENUES --
+const STATIC_UK_VENUES = [
+  // THEME PARKS (~20)
+  { type:'node',id:2001,lat:52.9889,lon:-1.8922, tags:{nameZh:'奥尔顿塔',name:'Alton Towers',tourism:'theme_park',website:'https://www.altontowers.com','addr:city':'Staffordshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2002,lat:51.4021,lon:-0.5135, tags:{nameZh:'索普公园',name:'Thorpe Park',tourism:'theme_park',website:'https://www.thorpepark.com','addr:city':'Surrey',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2003,lat:51.4636,lon:-0.6484, tags:{nameZh:'乐高乐园温莎',name:'Legoland Windsor',tourism:'theme_park',website:'https://www.legoland.co.uk','addr:city':'Windsor',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2004,lat:51.3494,lon:-0.3120, tags:{nameZh:'切辛顿冒险世界',name:'Chessington World of Adventures',tourism:'theme_park',website:'https://www.chessington.com','addr:city':'Surrey',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2005,lat:50.9508,lon:-1.5364, tags:{nameZh:'保尔顿公园（小猪佩奇）',name:'Paultons Park (Peppa Pig World)',tourism:'theme_park',website:'https://paultonspark.co.uk','addr:city':'Hampshire',opening_hours:'Mo-Su 10:00-17:30 (seasonal)'}},
+  { type:'node',id:2006,lat:54.2861,lon:-0.8800, tags:{nameZh:'弗拉明戈乐园',name:'Flamingo Land',tourism:'theme_park',website:'https://www.flamingoland.co.uk','addr:city':'North Yorkshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2007,lat:52.6108,lon:-1.7236, tags:{nameZh:'德雷顿庄园',name:'Drayton Manor',tourism:'theme_park',website:'https://www.draytonmanor.co.uk','addr:city':'Staffordshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2008,lat:53.7880,lon:-3.0543, tags:{nameZh:'布莱克浦欢乐海滩',name:'Blackpool Pleasure Beach',tourism:'theme_park',website:'https://www.blackpoolpleasurebeach.com','addr:city':'Blackpool',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2009,lat:53.3570,lon:-2.7750, tags:{nameZh:'格利夫顿冒险乐园',name:'Gulliver\'s World Warrington',tourism:'theme_park',website:'https://www.gulliversworldresort.co.uk','addr:city':'Warrington',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2010,lat:51.7560,lon:0.8370, tags:{nameZh:'冒险岛',name:'Adventure Island Southend',tourism:'theme_park',website:'https://www.adventureisland.co.uk','addr:city':'Southend-on-Sea',opening_hours:'Mo-Su 10:00-18:00 (seasonal)'}},
+  { type:'node',id:2011,lat:52.3714,lon:-1.4731, tags:{nameZh:'格利夫顿水世界',name:'Gulliver\'s Kingdom Matlock Bath',tourism:'theme_park',website:'https://www.gulliverskingdomresort.co.uk','addr:city':'Matlock Bath',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2012,lat:53.5310,lon:-1.1280, tags:{nameZh:'约克郡野生动物公园',name:'Yorkshire Wildlife Park',tourism:'theme_park',website:'https://www.yorkshirewildlifepark.com','addr:city':'Doncaster',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2013,lat:52.8800,lon:-1.2960, tags:{nameZh:'国家太空中心',name:'National Space Centre',tourism:'museum',website:'https://spacecentre.co.uk','addr:city':'Leicester',opening_hours:'Tu-Su 10:00-16:00'}},
+  { type:'node',id:2014,lat:51.3960,lon:-2.3590, tags:{nameZh:'朗利特野生动物园',name:'Longleat Safari Park',tourism:'theme_park',website:'https://www.longleat.co.uk','addr:city':'Wiltshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2015,lat:53.2333,lon:-2.8833, tags:{nameZh:'切斯特动物园花园',name:'Chester Zoo Gardens',tourism:'theme_park',website:'https://www.chesterzoo.org','addr:city':'Chester',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2016,lat:51.5254,lon:-0.1530, tags:{nameZh:'伦敦杜莎夫人蜡像馆',name:'Madame Tussauds London',tourism:'theme_park',website:'https://www.madametussauds.com/london','addr:city':'London',opening_hours:'Mo-Su 10:00-16:00'}},
+  { type:'node',id:2017,lat:55.0364,lon:-1.4237, tags:{nameZh:'冒险体验',name:'Adventure Experience Northumberland',tourism:'theme_park','addr:city':'Northumberland',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2018,lat:50.3398,lon:-4.7523, tags:{nameZh:'康沃尔伊甸园',name:'Eden Project',tourism:'theme_park',website:'https://www.edenproject.com','addr:city':'Cornwall',opening_hours:'Mo-Su 09:30-18:00'}},
+  { type:'node',id:2019,lat:51.5033,lon:-0.1195, tags:{nameZh:'伦敦眼',name:'London Eye',tourism:'attraction',website:'https://www.londoneye.com','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2020,lat:51.5015,lon:-0.1204, tags:{nameZh:'伦敦海洋生活水族馆',name:'SEA LIFE London Aquarium',tourism:'aquarium',website:'https://www.visitsealife.com/london','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
+
+  // ZOOS / AQUARIUMS (~15)
+  { type:'node',id:2030,lat:51.5353,lon:-0.1534, tags:{nameZh:'伦敦动物园',name:'ZSL London Zoo',tourism:'zoo',website:'https://www.zsl.org/zsl-london-zoo','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2031,lat:53.2283,lon:-2.8850, tags:{nameZh:'切斯特动物园',name:'Chester Zoo',tourism:'zoo',website:'https://www.chesterzoo.org','addr:city':'Chester',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2032,lat:55.9420,lon:-3.2681, tags:{nameZh:'爱丁堡动物园',name:'Edinburgh Zoo',tourism:'zoo',website:'https://www.edinburghzoo.org.uk','addr:city':'Edinburgh',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2033,lat:51.5740,lon:-0.4880, tags:{nameZh:'惠普斯奈德动物园',name:'ZSL Whipsnade Zoo',tourism:'zoo',website:'https://www.zsl.org/zsl-whipsnade-zoo','addr:city':'Bedfordshire',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2034,lat:51.8850,lon:0.8533, tags:{nameZh:'科尔切斯特动物园',name:'Colchester Zoo',tourism:'zoo',website:'https://www.colchester-zoo.com','addr:city':'Colchester',opening_hours:'Mo-Su 09:30-17:00'}},
+  { type:'node',id:2035,lat:53.7541,lon:-2.7077, tags:{nameZh:'布莱克浦海洋生活',name:'SEA LIFE Blackpool',tourism:'aquarium',website:'https://www.visitsealife.com/blackpool','addr:city':'Blackpool',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2036,lat:50.8189,lon:-0.1375, tags:{nameZh:'布莱顿海洋生活',name:'SEA LIFE Brighton',tourism:'aquarium',website:'https://www.visitsealife.com/brighton','addr:city':'Brighton',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2037,lat:53.4010,lon:-2.9896, tags:{nameZh:'诺斯利野生动物园',name:'Knowsley Safari',tourism:'zoo',website:'https://www.knowsleysafariexperience.co.uk','addr:city':'Liverpool',opening_hours:'Mo-Su 10:00-16:00'}},
+  { type:'node',id:2038,lat:52.4523,lon:-1.7375, tags:{nameZh:'国家海洋生活伯明翰',name:'National SEA LIFE Centre Birmingham',tourism:'aquarium',website:'https://www.visitsealife.com/birmingham','addr:city':'Birmingham',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2039,lat:51.4436,lon:-2.5996, tags:{nameZh:'布里斯托尔动物园',name:'Bristol Zoo Project',tourism:'zoo',website:'https://www.bristolzoo.org.uk','addr:city':'Bristol',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2040,lat:53.4015,lon:-1.4670, tags:{nameZh:'约克郡野生动物公园',name:'Yorkshire Wildlife Park',tourism:'zoo',website:'https://www.yorkshirewildlifepark.com','addr:city':'Doncaster',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2041,lat:51.4950,lon:-3.1740, tags:{nameZh:'卡迪夫国家博物馆水族馆',name:'National Museum Cardiff Aquarium',tourism:'aquarium','addr:city':'Cardiff',opening_hours:'Tu-Su 10:00-17:00'}},
+  { type:'node',id:2042,lat:53.4631,lon:-2.2368, tags:{nameZh:'曼彻斯特海洋生活',name:'SEA LIFE Manchester',tourism:'aquarium',website:'https://www.visitsealife.com/manchester','addr:city':'Manchester',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2043,lat:55.8524,lon:-4.2879, tags:{nameZh:'格拉斯哥海洋生活',name:'SEA LIFE Loch Lomond',tourism:'aquarium',website:'https://www.visitsealife.com/loch-lomond','addr:city':'Glasgow',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2044,lat:54.4355,lon:-1.3050, tags:{nameZh:'北约克郡野生动物农场',name:'Flamingo Land Zoo',tourism:'zoo','addr:city':'North Yorkshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+
+  // MUSEUMS (~30)
+  { type:'node',id:2060,lat:51.4967,lon:-0.1764, tags:{nameZh:'自然历史博物馆',name:'Natural History Museum',tourism:'museum',website:'https://www.nhm.ac.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-17:50'}},
+  { type:'node',id:2061,lat:51.4978,lon:-0.1745, tags:{nameZh:'科学博物馆',name:'Science Museum',tourism:'museum',website:'https://www.sciencemuseum.org.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2062,lat:51.4957,lon:-0.1724, tags:{nameZh:'V&A童年博物馆',name:'Young V&A (Museum of Childhood)',tourism:'museum',website:'https://www.vam.ac.uk/young','addr:city':'London',opening_hours:'Mo-Su 10:00-17:45'}},
+  { type:'node',id:2063,lat:53.9599,lon:-1.0873, tags:{nameZh:'国家铁路博物馆约克',name:'National Railway Museum York',tourism:'museum',website:'https://www.railwaymuseum.org.uk','addr:city':'York',opening_hours:'We-Su 10:00-17:00'}},
+  { type:'node',id:2064,lat:54.9688,lon:-1.6175, tags:{nameZh:'发现博物馆',name:'Discovery Museum Newcastle',tourism:'museum',website:'https://discoverymuseum.org.uk','addr:city':'Newcastle',opening_hours:'Mo-Su 10:00-16:00'}},
+  { type:'node',id:2065,lat:53.7314,lon:-1.7810, tags:{nameZh:'尤里卡儿童博物馆',name:'Eureka! The National Children\'s Museum',tourism:'museum',website:'https://www.eureka.org.uk','addr:city':'Halifax',opening_hours:'Tu-Su 10:00-17:00'}},
+  { type:'node',id:2066,lat:51.5194,lon:-0.1270, tags:{nameZh:'大英博物馆',name:'British Museum',tourism:'museum',website:'https://www.britishmuseum.org','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2067,lat:51.5076,lon:-0.0994, tags:{nameZh:'伦敦塔',name:'Tower of London',tourism:'museum',website:'https://www.hrp.org.uk/tower-of-london','addr:city':'London',opening_hours:'Tu-Sa 09:00-17:30, Su-Mo 10:00-17:30'}},
+  { type:'node',id:2068,lat:51.5014,lon:-0.1419, tags:{nameZh:'白金汉宫',name:'Buckingham Palace',tourism:'museum',website:'https://www.rct.uk/visit/buckingham-palace','addr:city':'London',opening_hours:'Jul-Sep 09:30-19:30 (seasonal)'}},
+  { type:'node',id:2069,lat:53.4808,lon:-2.2426, tags:{nameZh:'科学与工业博物馆',name:'Science and Industry Museum Manchester',tourism:'museum',website:'https://www.scienceandindustrymuseum.org.uk','addr:city':'Manchester',opening_hours:'We-Su 10:00-17:00'}},
+  { type:'node',id:2070,lat:53.4058,lon:-2.9804, tags:{nameZh:'利物浦世界博物馆',name:'World Museum Liverpool',tourism:'museum',website:'https://www.liverpoolmuseums.org.uk','addr:city':'Liverpool',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2071,lat:51.5081,lon:-0.0759, tags:{nameZh:'伦敦桥体验',name:'The London Bridge Experience',tourism:'museum','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2072,lat:51.4774,lon:-0.0014, tags:{nameZh:'格林威治天文台',name:'Royal Observatory Greenwich',tourism:'museum',website:'https://www.rmg.co.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2073,lat:52.4549,lon:-1.7116, tags:{nameZh:'伯明翰科学与发现中心',name:'Thinktank Birmingham Science Museum',tourism:'museum',website:'https://www.birminghammuseums.org.uk/thinktank','addr:city':'Birmingham',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2074,lat:51.4492,lon:-2.6003, tags:{nameZh:'布里斯托尔科学中心',name:'We The Curious Bristol',tourism:'museum',website:'https://www.wethecurious.org','addr:city':'Bristol',opening_hours:'Tu-Su 10:00-17:00'}},
+  { type:'node',id:2075,lat:51.7520,lon:-1.2577, tags:{nameZh:'牛津自然历史博物馆',name:'Oxford University Museum of Natural History',tourism:'museum',website:'https://www.oumnh.ox.ac.uk','addr:city':'Oxford',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2076,lat:52.2046,lon:0.1180, tags:{nameZh:'剑桥菲茨威廉博物馆',name:'Fitzwilliam Museum Cambridge',tourism:'museum',website:'https://www.fitzmuseum.cam.ac.uk','addr:city':'Cambridge',opening_hours:'Tu-Sa 10:00-17:00, Su 12:00-17:00'}},
+  { type:'node',id:2077,lat:51.5080,lon:-0.0762, tags:{nameZh:'HMS贝尔法斯特号',name:'HMS Belfast',tourism:'museum',website:'https://www.iwm.org.uk/visits/hms-belfast','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2078,lat:55.9531,lon:-3.1889, tags:{nameZh:'爱丁堡国家博物馆',name:'National Museum of Scotland',tourism:'museum',website:'https://www.nms.ac.uk','addr:city':'Edinburgh',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2079,lat:53.4058,lon:-2.9916, tags:{nameZh:'利物浦甲壳虫乐队博物馆',name:'The Beatles Story Liverpool',tourism:'museum',website:'https://www.beatlesstory.com','addr:city':'Liverpool',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2080,lat:51.5023,lon:-0.0034, tags:{nameZh:'国家海事博物馆',name:'National Maritime Museum',tourism:'museum',website:'https://www.rmg.co.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2081,lat:52.1953,lon:-2.2215, tags:{nameZh:'伍斯特博物馆',name:'Worcester City Art Gallery & Museum',tourism:'museum','addr:city':'Worcester',opening_hours:'Tu-Sa 10:30-16:30'}},
+  { type:'node',id:2082,lat:51.5145,lon:-0.0977, tags:{nameZh:'伦敦博物馆',name:'Museum of London',tourism:'museum',website:'https://www.museumoflondon.org.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2083,lat:53.8008,lon:-1.5491, tags:{nameZh:'利兹皇家军械博物馆',name:'Royal Armouries Museum Leeds',tourism:'museum',website:'https://royalarmouries.org','addr:city':'Leeds',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2084,lat:51.5036,lon:0.0034, tags:{nameZh:'卡蒂萨克号帆船',name:'Cutty Sark',tourism:'museum',website:'https://www.rmg.co.uk/cutty-sark','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2085,lat:53.4097,lon:-2.9722, tags:{nameZh:'利物浦国际奴隶制博物馆',name:'International Slavery Museum',tourism:'museum',website:'https://www.liverpoolmuseums.org.uk','addr:city':'Liverpool',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2086,lat:51.5089,lon:-0.1283, tags:{nameZh:'国家美术馆',name:'National Gallery',tourism:'museum',website:'https://www.nationalgallery.org.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2087,lat:51.5076,lon:-0.0888, tags:{nameZh:'泰特现代美术馆',name:'Tate Modern',tourism:'museum',website:'https://www.tate.org.uk/visit/tate-modern','addr:city':'London',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2088,lat:51.4485,lon:-0.3414, tags:{nameZh:'汉普顿宫',name:'Hampton Court Palace',tourism:'museum',website:'https://www.hrp.org.uk/hampton-court-palace','addr:city':'London',opening_hours:'Mo-Su 10:00-16:30'}},
+
+  // CHINESE RESTAURANTS (~40)
+  // London Chinatown (Gerrard St)
+  { type:'node',id:2100,lat:51.5114,lon:-0.1308, tags:{nameZh:'四季中餐厅',name:'Four Seasons Chinatown',amenity:'chinese_restaurant','addr:city':'London','addr:street':'12 Gerrard Street'}},
+  { type:'node',id:2101,lat:51.5112,lon:-0.1302, tags:{nameZh:'金龙轩',name:'Golden Dragon',amenity:'chinese_restaurant','addr:city':'London','addr:street':'28-29 Gerrard Street'}},
+  { type:'node',id:2102,lat:51.5116,lon:-0.1312, tags:{nameZh:'文兴酒家',name:'New World Chinese Restaurant',amenity:'chinese_restaurant','addr:city':'London','addr:street':'1 Gerrard Place'}},
+  { type:'node',id:2103,lat:51.5110,lon:-0.1295, tags:{nameZh:'旺记',name:'Wong Kei',amenity:'chinese_restaurant','addr:city':'London','addr:street':'41-43 Wardour Street'}},
+  { type:'node',id:2104,lat:51.5118,lon:-0.1320, tags:{nameZh:'皇朝酒家',name:'Imperial China',amenity:'chinese_restaurant','addr:city':'London','addr:street':'25a Lisle Street'}},
+  { type:'node',id:2105,lat:51.5108,lon:-0.1288, tags:{nameZh:'美丽华',name:'Plum Valley',amenity:'chinese_restaurant','addr:city':'London','addr:street':'20 Gerrard Street'}},
+  { type:'node',id:2106,lat:51.5120,lon:-0.1316, tags:{nameZh:'鹿鼎记',name:'Dumplings Legend',amenity:'chinese_restaurant','addr:city':'London','addr:street':'15-16 Gerrard Street'}},
+  { type:'node',id:2107,lat:51.5122,lon:-0.1325, tags:{nameZh:'巴蜀风味',name:'BaZi Sichuan',amenity:'chinese_restaurant','addr:city':'London','addr:street':'Wardour Street'}},
+  { type:'node',id:2108,lat:51.5106,lon:-0.1280, tags:{nameZh:'海底捞伦敦',name:'Haidilao London',amenity:'chinese_restaurant',website:'https://www.haidilao.com','addr:city':'London','addr:street':'Shaftesbury Avenue'}},
+  { type:'node',id:2109,lat:51.5100,lon:-0.1275, tags:{nameZh:'川味居伦敦',name:'Sichuan Folk London',amenity:'chinese_restaurant','addr:city':'London','addr:street':'Hanway Place'}},
+  // Manchester Chinatown
+  { type:'node',id:2110,lat:53.4769,lon:-2.2401, tags:{nameZh:'杨记',name:'Yang Sing Manchester',amenity:'chinese_restaurant',website:'https://www.yangsing.com','addr:city':'Manchester','addr:street':'34 Princess Street'}},
+  { type:'node',id:2111,lat:53.4773,lon:-2.2395, tags:{nameZh:'红辣椒曼彻斯特',name:'Red Chilli Manchester',amenity:'chinese_restaurant','addr:city':'Manchester','addr:street':'70-72 Portland Street'}},
+  { type:'node',id:2112,lat:53.4775,lon:-2.2410, tags:{nameZh:'翡翠中餐厅',name:'Jade Garden Manchester',amenity:'chinese_restaurant','addr:city':'Manchester','addr:street':'52 George Street'}},
+  { type:'node',id:2113,lat:53.4765,lon:-2.2388, tags:{nameZh:'海皇曼彻斯特',name:'Ocean Treasure Manchester',amenity:'chinese_restaurant','addr:city':'Manchester','addr:street':'Faulkner Street'}},
+  // Liverpool Chinatown (oldest in Europe)
+  { type:'node',id:2114,lat:53.3990,lon:-2.9770, tags:{nameZh:'利物浦宝华',name:'Tao Restaurant Liverpool',amenity:'chinese_restaurant','addr:city':'Liverpool','addr:street':'5-7 Berry Street'}},
+  { type:'node',id:2115,lat:53.3988,lon:-2.9780, tags:{nameZh:'乐天利物浦',name:'Lotte Bubble Tea Liverpool',amenity:'chinese_restaurant','addr:city':'Liverpool','addr:street':'Nelson Street'}},
+  { type:'node',id:2116,lat:53.3985,lon:-2.9775, tags:{nameZh:'金满楼利物浦',name:'Mei Mei Chinese Liverpool',amenity:'chinese_restaurant','addr:city':'Liverpool','addr:street':'9 Berry Street'}},
+  // Birmingham
+  { type:'node',id:2117,lat:52.4774,lon:-1.8983, tags:{nameZh:'伯明翰中华楼',name:'Chung Ying Birmingham',amenity:'chinese_restaurant',website:'https://www.chungying.co.uk','addr:city':'Birmingham','addr:street':'16-18 Wrottesley Street'}},
+  { type:'node',id:2118,lat:52.4770,lon:-1.8975, tags:{nameZh:'明怡伯明翰',name:'Min Yee Chinese Birmingham',amenity:'chinese_restaurant','addr:city':'Birmingham','addr:street':'Hurst Street'}},
+  // Edinburgh
+  { type:'node',id:2119,lat:55.9558,lon:-3.1820, tags:{nameZh:'爱丁堡龙宫',name:'Loon Fung Edinburgh',amenity:'chinese_restaurant','addr:city':'Edinburgh','addr:street':'Grindlay Street'}},
+  { type:'node',id:2120,lat:55.9562,lon:-3.1830, tags:{nameZh:'爱丁堡功夫',name:'Ting Thai Caravan Edinburgh',amenity:'chinese_restaurant','addr:city':'Edinburgh','addr:street':'Bread Street'}},
+  // Glasgow
+  { type:'node',id:2121,lat:55.8592,lon:-4.2558, tags:{nameZh:'格拉斯哥兰州拉面',name:'Lychee Oriental Glasgow',amenity:'chinese_restaurant','addr:city':'Glasgow','addr:street':'Mitchell Street'}},
+  { type:'node',id:2122,lat:55.8595,lon:-4.2565, tags:{nameZh:'格拉斯哥中华楼',name:'China Buffet King Glasgow',amenity:'chinese_restaurant','addr:city':'Glasgow','addr:street':'Renfield Street'}},
+  // Leeds
+  { type:'node',id:2123,lat:53.7965,lon:-1.5476, tags:{nameZh:'利兹华人饭店',name:'Sichuan House Leeds',amenity:'chinese_restaurant','addr:city':'Leeds','addr:street':'The Headrow'}},
+  // Sheffield
+  { type:'node',id:2124,lat:53.3813,lon:-1.4706, tags:{nameZh:'谢菲尔德龙门',name:'Loong Moon Sheffield',amenity:'chinese_restaurant','addr:city':'Sheffield','addr:street':'London Road'}},
+  // Bristol
+  { type:'node',id:2125,lat:51.4539,lon:-2.5943, tags:{nameZh:'布里斯托尔翠园',name:'Mayflower Chinese Bristol',amenity:'chinese_restaurant','addr:city':'Bristol','addr:street':'Baldwin Street'}},
+  // Cardiff
+  { type:'node',id:2126,lat:51.4836,lon:-3.1777, tags:{nameZh:'卡迪夫唐人街',name:'Happy Gathering Cardiff',amenity:'chinese_restaurant','addr:city':'Cardiff','addr:street':'Tudor Street'}},
+  // Newcastle
+  { type:'node',id:2127,lat:54.9740,lon:-1.6101, tags:{nameZh:'纽卡斯尔龙宫',name:'Lam\'s Chinese Newcastle',amenity:'chinese_restaurant','addr:city':'Newcastle','addr:street':'Stowell Street'}},
+  { type:'node',id:2128,lat:54.9745,lon:-1.6110, tags:{nameZh:'纽卡唐人街红辣椒',name:'King Neptune Newcastle',amenity:'chinese_restaurant','addr:city':'Newcastle','addr:street':'Stowell Street'}},
+  // Nottingham
+  { type:'node',id:2129,lat:52.9536,lon:-1.1507, tags:{nameZh:'诺丁汉中华楼',name:'Wok & Go Nottingham',amenity:'chinese_restaurant','addr:city':'Nottingham','addr:street':'Goosegate'}},
+  // Belfast
+  { type:'node',id:2130,lat:54.5960,lon:-5.9340, tags:{nameZh:'贝尔法斯特中餐厅',name:'Zen Belfast',amenity:'chinese_restaurant','addr:city':'Belfast','addr:street':'Adelaide Street'}},
+  // London extra
+  { type:'node',id:2131,lat:51.5160,lon:-0.1340, tags:{nameZh:'兰州拉面伦敦',name:'Lanzhou Noodle Bar London',amenity:'chinese_restaurant','addr:city':'London','addr:street':'Cranbourne Street'}},
+  { type:'node',id:2132,lat:51.5145,lon:-0.1355, tags:{nameZh:'鼎泰丰伦敦',name:'Din Tai Fung London',amenity:'chinese_restaurant',website:'https://www.dintaifung.co.uk','addr:city':'London','addr:street':'Shaftesbury Avenue'}},
+  { type:'node',id:2133,lat:51.5025,lon:-0.1180, tags:{nameZh:'文华东方烤鸭',name:'Min Jiang London',amenity:'chinese_restaurant','addr:city':'London','addr:street':'Kensington High Street'}},
+  { type:'node',id:2134,lat:51.5088,lon:-0.1322, tags:{nameZh:'蜀香门第',name:'Master Wei Xi\'an London',amenity:'chinese_restaurant','addr:city':'London','addr:street':'Bloomsbury Way'}},
+  { type:'node',id:2135,lat:51.5050,lon:-0.0950, tags:{nameZh:'川外川伦敦',name:'Sichuan Mansion London',amenity:'chinese_restaurant','addr:city':'London','addr:street':'Borough High Street'}},
+  { type:'node',id:2136,lat:53.4778,lon:-2.2405, tags:{nameZh:'曼彻斯特锦里',name:'Jing Li Manchester',amenity:'chinese_restaurant','addr:city':'Manchester','addr:street':'George Street'}},
+  { type:'node',id:2137,lat:53.3992,lon:-2.9785, tags:{nameZh:'利物浦龙凤',name:'Dragon Phoenix Liverpool',amenity:'chinese_restaurant','addr:city':'Liverpool','addr:street':'Upper Duke Street'}},
+  { type:'node',id:2138,lat:52.4768,lon:-1.8970, tags:{nameZh:'伯明翰四川人家',name:'Sichuan Moon Birmingham',amenity:'chinese_restaurant','addr:city':'Birmingham','addr:street':'Wrottesley Street'}},
+  { type:'node',id:2139,lat:53.8000,lon:-1.5480, tags:{nameZh:'利兹金凤凰',name:'Golden Phoenix Leeds',amenity:'chinese_restaurant','addr:city':'Leeds','addr:street':'Vicar Lane'}},
+
+  // BUFFETS (~20)
+  { type:'node',id:2150,lat:51.5130,lon:-0.1300, tags:{nameZh:'伦敦亚洲自助',name:'Cosmo London',amenity:'buffet_restaurant',website:'https://www.cosmo-restaurants.co.uk','addr:city':'London','addr:street':'Shaftesbury Avenue'}},
+  { type:'node',id:2151,lat:53.4780,lon:-2.2380, tags:{nameZh:'曼彻斯特亚洲自助',name:'Cosmo Manchester',amenity:'buffet_restaurant','addr:city':'Manchester','addr:street':'Deansgate'}},
+  { type:'node',id:2152,lat:52.4760,lon:-1.8980, tags:{nameZh:'伯明翰自助餐',name:'Red Hot World Buffet Birmingham',amenity:'buffet_restaurant','addr:city':'Birmingham','addr:street':'Broad Street'}},
+  { type:'node',id:2153,lat:53.4050,lon:-2.9820, tags:{nameZh:'利物浦自助餐',name:'Cosmo Liverpool',amenity:'buffet_restaurant','addr:city':'Liverpool','addr:street':'Hanover Street'}},
+  { type:'node',id:2154,lat:53.7975,lon:-1.5490, tags:{nameZh:'利兹自助餐',name:'Cosmo Leeds',amenity:'buffet_restaurant','addr:city':'Leeds','addr:street':'The Headrow'}},
+  { type:'node',id:2155,lat:55.9540,lon:-3.1870, tags:{nameZh:'爱丁堡自助',name:'Cosmo Edinburgh',amenity:'buffet_restaurant','addr:city':'Edinburgh','addr:street':'Fountainbridge'}},
+  { type:'node',id:2156,lat:51.4550,lon:-2.5950, tags:{nameZh:'布里斯托尔自助',name:'Cosmo Bristol',amenity:'buffet_restaurant','addr:city':'Bristol','addr:street':'Anchor Road'}},
+  { type:'node',id:2157,lat:53.3820,lon:-1.4720, tags:{nameZh:'谢菲尔德自助',name:'Cosmo Sheffield',amenity:'buffet_restaurant','addr:city':'Sheffield','addr:street':'Pinstone Street'}},
+  { type:'node',id:2158,lat:54.9730,lon:-1.6120, tags:{nameZh:'纽卡斯尔自助',name:'Cosmo Newcastle',amenity:'buffet_restaurant','addr:city':'Newcastle','addr:street':'The Gate'}},
+  { type:'node',id:2159,lat:52.9540,lon:-1.1500, tags:{nameZh:'诺丁汉自助',name:'Cosmo Nottingham',amenity:'buffet_restaurant','addr:city':'Nottingham','addr:street':'Market Street'}},
+  { type:'node',id:2160,lat:51.4840,lon:-3.1760, tags:{nameZh:'卡迪夫自助',name:'Cosmo Cardiff',amenity:'buffet_restaurant','addr:city':'Cardiff','addr:street':'St Mary Street'}},
+  { type:'node',id:2161,lat:55.8600,lon:-4.2550, tags:{nameZh:'格拉斯哥自助',name:'Cosmo Glasgow',amenity:'buffet_restaurant','addr:city':'Glasgow','addr:street':'Buchanan Street'}},
+  { type:'node',id:2162,lat:53.2290,lon:-2.8860, tags:{nameZh:'切斯特自助',name:'Chinese Buffet Chester',amenity:'buffet_restaurant','addr:city':'Chester','addr:street':'Foregate Street'}},
+  { type:'node',id:2163,lat:50.7200,lon:-1.8790, tags:{nameZh:'伯恩茅斯自助',name:'Cosmo Bournemouth',amenity:'buffet_restaurant','addr:city':'Bournemouth','addr:street':'Exeter Road'}},
+  { type:'node',id:2164,lat:51.5090,lon:-0.1260, tags:{nameZh:'伦敦中华自助',name:'Chinese Buffet King London',amenity:'buffet_restaurant','addr:city':'London','addr:street':'Charing Cross Road'}},
+  { type:'node',id:2165,lat:53.4770,lon:-2.2420, tags:{nameZh:'曼彻斯特铁板烧',name:'Sakura Teppanyaki Manchester',amenity:'buffet_restaurant','addr:city':'Manchester','addr:street':'Princess Street'}},
+  { type:'node',id:2166,lat:51.5135,lon:-0.0880, tags:{nameZh:'伦敦东区自助',name:'Wing\'s Buffet London',amenity:'buffet_restaurant','addr:city':'London','addr:street':'Tower Bridge Road'}},
+  { type:'node',id:2167,lat:54.5970,lon:-5.9350, tags:{nameZh:'贝尔法斯特亚洲自助',name:'Oriental Express Belfast',amenity:'buffet_restaurant','addr:city':'Belfast','addr:street':'Dublin Road'}},
+  { type:'node',id:2168,lat:53.7540,lon:-2.7100, tags:{nameZh:'布莱克浦自助',name:'China City Blackpool',amenity:'buffet_restaurant','addr:city':'Blackpool','addr:street':'Topping Street'}},
+  { type:'node',id:2169,lat:52.6300,lon:-1.1300, tags:{nameZh:'莱斯特自助',name:'Cosmo Leicester',amenity:'buffet_restaurant','addr:city':'Leicester','addr:street':'Highcross Street'}},
+
+  // INDOOR PLAY (~25)
+  { type:'node',id:2180,lat:51.5025,lon:-0.0198, tags:{nameZh:'伦敦KidZania',name:'KidZania London',leisure:'indoor_playground',website:'https://kidzania.co.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-19:00'}},
+  { type:'node',id:2181,lat:53.4830,lon:-2.2440, tags:{nameZh:'曼彻斯特室内游乐',name:'Legoland Discovery Centre Manchester',leisure:'indoor_playground',website:'https://www.legolanddiscoverycentre.com/manchester','addr:city':'Manchester',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2182,lat:52.4560,lon:-1.7130, tags:{nameZh:'伯明翰乐高发现中心',name:'Legoland Discovery Centre Birmingham',leisure:'indoor_playground',website:'https://www.legolanddiscoverycentre.com/birmingham','addr:city':'Birmingham',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2183,lat:55.9530,lon:-3.1890, tags:{nameZh:'爱丁堡室内游乐',name:'Edinburgh Soft Play',leisure:'indoor_playground','addr:city':'Edinburgh',opening_hours:'Mo-Su 09:30-18:00'}},
+  { type:'node',id:2184,lat:53.4060,lon:-2.9810, tags:{nameZh:'利物浦室内游乐',name:'Jump Arena Liverpool',leisure:'indoor_playground','addr:city':'Liverpool',opening_hours:'Mo-Su 10:00-20:00'}},
+  { type:'node',id:2185,lat:51.4545,lon:-2.5940, tags:{nameZh:'布里斯托尔室内游乐',name:'Jump Bristol',leisure:'indoor_playground','addr:city':'Bristol',opening_hours:'Mo-Su 09:30-18:00'}},
+  { type:'node',id:2186,lat:53.7970,lon:-1.5500, tags:{nameZh:'利兹室内游乐',name:'Ninja Warrior Adventure Leeds',leisure:'indoor_playground','addr:city':'Leeds',opening_hours:'Mo-Su 09:30-19:00'}},
+  { type:'node',id:2187,lat:53.3810,lon:-1.4700, tags:{nameZh:'谢菲尔德室内游乐',name:'Inflata Nation Sheffield',leisure:'indoor_playground','addr:city':'Sheffield',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2188,lat:55.8590,lon:-4.2560, tags:{nameZh:'格拉斯哥室内游乐',name:'Scrambles Glasgow',leisure:'indoor_playground','addr:city':'Glasgow',opening_hours:'Mo-Su 09:30-18:00'}},
+  { type:'node',id:2189,lat:51.4830,lon:-3.1780, tags:{nameZh:'卡迪夫室内游乐',name:'Ninja Warrior Cardiff',leisure:'indoor_playground','addr:city':'Cardiff',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2190,lat:54.5970,lon:-5.9330, tags:{nameZh:'贝尔法斯特室内游乐',name:'W5 Interactive Belfast',leisure:'indoor_playground',website:'https://w5online.co.uk','addr:city':'Belfast',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2191,lat:54.9690,lon:-1.6180, tags:{nameZh:'纽卡斯尔蹦床公园',name:'Flip Out Newcastle',leisure:'indoor_playground','addr:city':'Newcastle',opening_hours:'Mo-Su 10:00-20:00'}},
+  { type:'node',id:2192,lat:52.9530,lon:-1.1500, tags:{nameZh:'诺丁汉蹦床公园',name:'Oxygen Freejumping Nottingham',leisure:'indoor_playground','addr:city':'Nottingham',opening_hours:'Mo-Su 09:00-21:00'}},
+  { type:'node',id:2193,lat:51.5060,lon:-0.0240, tags:{nameZh:'伦敦O2蹦床',name:'Bounce London O2',leisure:'indoor_playground','addr:city':'London',opening_hours:'Mo-Su 10:00-21:00'}},
+  { type:'node',id:2194,lat:53.7880,lon:-3.0540, tags:{nameZh:'布莱克浦室内游乐',name:'Sandcastle Waterpark Blackpool',leisure:'indoor_playground',website:'https://www.sandcastle-waterpark.co.uk','addr:city':'Blackpool',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2195,lat:50.8200,lon:-0.1370, tags:{nameZh:'布莱顿室内游乐',name:'Brighton Palace Pier Arcade',leisure:'indoor_playground','addr:city':'Brighton',opening_hours:'Mo-Su 10:00-21:00'}},
+  { type:'node',id:2196,lat:52.6310,lon:-1.1290, tags:{nameZh:'莱斯特蹦床公园',name:'Air Extreme Leicester',leisure:'indoor_playground','addr:city':'Leicester',opening_hours:'Mo-Su 09:00-21:00'}},
+  { type:'node',id:2197,lat:53.2285,lon:-2.8870, tags:{nameZh:'切斯特室内游乐',name:'Fun4All Chester',leisure:'indoor_playground','addr:city':'Chester',opening_hours:'Mo-Su 09:30-18:00'}},
+  { type:'node',id:2198,lat:51.7530,lon:-1.2580, tags:{nameZh:'牛津室内游乐',name:'Oxford Soft Play',leisure:'indoor_playground','addr:city':'Oxford',opening_hours:'Mo-Su 09:30-18:00'}},
+  { type:'node',id:2199,lat:51.3800,lon:-2.3600, tags:{nameZh:'巴斯室内游乐',name:'Jump Nation Bath',leisure:'indoor_playground','addr:city':'Bath',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2200,lat:53.9600,lon:-1.0870, tags:{nameZh:'约克室内游乐',name:'York Bounce',leisure:'indoor_playground','addr:city':'York',opening_hours:'Mo-Su 10:00-18:00'}},
+  { type:'node',id:2201,lat:52.2050,lon:0.1200, tags:{nameZh:'剑桥室内游乐',name:'Cambridge Leisure Park Play',leisure:'indoor_playground','addr:city':'Cambridge',opening_hours:'Mo-Su 09:30-18:00'}},
+  { type:'node',id:2202,lat:53.7520,lon:-0.3370, tags:{nameZh:'赫尔室内游乐',name:'The Deep Hull Aquarium',tourism:'aquarium',website:'https://www.thedeep.co.uk','addr:city':'Hull',opening_hours:'Mo-Su 10:00-17:00'}},
+
+  // BEACHES (~20)
+  { type:'node',id:2210,lat:50.2700,lon:-5.0540, tags:{nameZh:'纽奎海滩',name:'Fistral Beach Newquay',natural:'beach','addr:city':'Cornwall'}},
+  { type:'node',id:2211,lat:50.8190,lon:-0.1370, tags:{nameZh:'布莱顿海滩',name:'Brighton Beach',natural:'beach','addr:city':'Brighton'}},
+  { type:'node',id:2212,lat:50.7170,lon:-1.8720, tags:{nameZh:'伯恩茅斯海滩',name:'Bournemouth Beach',natural:'beach','addr:city':'Bournemouth'}},
+  { type:'node',id:2213,lat:54.2830,lon:-0.3960, tags:{nameZh:'斯卡伯勒海滩',name:'Scarborough Beach',natural:'beach','addr:city':'Scarborough'}},
+  { type:'node',id:2214,lat:51.6760,lon:-4.6900, tags:{nameZh:'滕比海滩',name:'Tenby Beach Pembrokeshire',natural:'beach','addr:city':'Pembrokeshire'}},
+  { type:'node',id:2215,lat:50.1180,lon:-5.5370, tags:{nameZh:'圣艾夫斯海滩',name:'St Ives Beach Cornwall',natural:'beach','addr:city':'Cornwall'}},
+  { type:'node',id:2216,lat:53.7920,lon:-3.0540, tags:{nameZh:'布莱克浦海滩',name:'Blackpool Beach',natural:'beach','addr:city':'Blackpool'}},
+  { type:'node',id:2217,lat:50.7400,lon:-1.0740, tags:{nameZh:'海莱岛海滩',name:'Hayling Island Beach',natural:'beach','addr:city':'Hampshire'}},
+  { type:'node',id:2218,lat:50.6100,lon:-2.4500, tags:{nameZh:'韦茅斯海滩',name:'Weymouth Beach',natural:'beach','addr:city':'Dorset'}},
+  { type:'node',id:2219,lat:50.3400,lon:-4.1400, tags:{nameZh:'普利茅斯海滩',name:'Plymouth Hoe Beach',natural:'beach','addr:city':'Plymouth'}},
+  { type:'node',id:2220,lat:55.0530,lon:-1.4270, tags:{nameZh:'泰恩河畔海滩',name:'Tynemouth Longsands Beach',natural:'beach','addr:city':'Tynemouth'}},
+  { type:'node',id:2221,lat:53.3250,lon:-3.1010, tags:{nameZh:'西柯比海滩',name:'West Kirby Beach',natural:'beach','addr:city':'Merseyside'}},
+  { type:'node',id:2222,lat:52.9400,lon:1.3000, tags:{nameZh:'诺福克海滩',name:'Holkham Beach Norfolk',natural:'beach','addr:city':'Norfolk'}},
+  { type:'node',id:2223,lat:50.3500,lon:-5.1500, tags:{nameZh:'帕德斯托海滩',name:'Padstow Beach Cornwall',natural:'beach','addr:city':'Cornwall'}},
+  { type:'node',id:2224,lat:51.3900,lon:1.3900, tags:{nameZh:'马尔盖特海滩',name:'Margate Beach Kent',natural:'beach','addr:city':'Kent'}},
+  { type:'node',id:2225,lat:50.2330,lon:-5.2700, tags:{nameZh:'康沃尔波尔齐斯海滩',name:'Porthcurno Beach Cornwall',natural:'beach','addr:city':'Cornwall'}},
+  { type:'node',id:2226,lat:56.4600,lon:-5.3900, tags:{nameZh:'苏格兰奥班海滩',name:'Oban Beach Scotland',natural:'beach','addr:city':'Oban'}},
+  { type:'node',id:2227,lat:57.8700,lon:-5.0200, tags:{nameZh:'苏格兰高地海滩',name:'Balnakeil Beach Highlands',natural:'beach','addr:city':'Highlands'}},
+  { type:'node',id:2228,lat:51.6200,lon:-3.9100, tags:{nameZh:'威尔士罗西利海滩',name:'Rhossili Bay Wales',natural:'beach','addr:city':'Wales'}},
+  { type:'node',id:2229,lat:55.1310,lon:-1.6120, tags:{nameZh:'诺森伯兰海滩',name:'Bamburgh Beach Northumberland',natural:'beach','addr:city':'Northumberland'}},
+
+  // HISTORIC (~30)
+  { type:'node',id:2240,lat:51.5081,lon:-0.0759, tags:{nameZh:'伦敦塔',name:'Tower of London',historic:'castle',website:'https://www.hrp.org.uk/tower-of-london','addr:city':'London',opening_hours:'Tu-Sa 09:00-17:30'}},
+  { type:'node',id:2241,lat:51.5014,lon:-0.1419, tags:{nameZh:'白金汉宫',name:'Buckingham Palace',historic:'castle',website:'https://www.rct.uk','addr:city':'London',opening_hours:'Jul-Sep (seasonal)'}},
+  { type:'node',id:2242,lat:51.1789,lon:-1.8262, tags:{nameZh:'巨石阵',name:'Stonehenge',historic:'monument',website:'https://www.english-heritage.org.uk/visit/places/stonehenge','addr:city':'Wiltshire',opening_hours:'Mo-Su 09:30-17:00'}},
+  { type:'node',id:2243,lat:55.9486,lon:-3.1999, tags:{nameZh:'爱丁堡城堡',name:'Edinburgh Castle',historic:'castle',website:'https://www.edinburghcastle.scot','addr:city':'Edinburgh',opening_hours:'Mo-Su 09:30-17:00'}},
+  { type:'node',id:2244,lat:52.2815,lon:-1.5849, tags:{nameZh:'华威城堡',name:'Warwick Castle',historic:'castle',website:'https://www.warwick-castle.com','addr:city':'Warwick',opening_hours:'Mo-Su 10:00-16:00'}},
+  { type:'node',id:2245,lat:51.4485,lon:-0.3414, tags:{nameZh:'汉普顿宫',name:'Hampton Court Palace',historic:'castle',website:'https://www.hrp.org.uk/hampton-court-palace','addr:city':'London',opening_hours:'Mo-Su 10:00-16:30'}},
+  { type:'node',id:2246,lat:51.4839,lon:-0.6046, tags:{nameZh:'温莎城堡',name:'Windsor Castle',historic:'castle',website:'https://www.rct.uk/visit/windsor-castle','addr:city':'Windsor',opening_hours:'Mo-Su 10:00-16:15'}},
+  { type:'node',id:2247,lat:53.9596,lon:-1.0867, tags:{nameZh:'约克大教堂',name:'York Minster',historic:'monument',website:'https://yorkminster.org','addr:city':'York',opening_hours:'Mo-Sa 09:30-16:00, Su 12:30-15:00'}},
+  { type:'node',id:2248,lat:51.3812,lon:-2.3590, tags:{nameZh:'巴斯罗马浴场',name:'Roman Baths',historic:'ruins',website:'https://www.romanbaths.co.uk','addr:city':'Bath',opening_hours:'Mo-Su 09:00-18:00'}},
+  { type:'node',id:2249,lat:51.2802,lon:1.0800, tags:{nameZh:'坎特伯雷大教堂',name:'Canterbury Cathedral',historic:'monument',website:'https://www.canterbury-cathedral.org','addr:city':'Canterbury',opening_hours:'Mo-Sa 09:00-17:00, Su 12:30-14:30'}},
+  { type:'node',id:2250,lat:55.9533,lon:-3.1883, tags:{nameZh:'爱丁堡皇家英里',name:'Royal Mile Edinburgh',historic:'monument','addr:city':'Edinburgh'}},
+  { type:'node',id:2251,lat:54.4066,lon:-2.9175, tags:{nameZh:'温德米尔湖区',name:'Windermere Lake District',historic:'monument','addr:city':'Lake District'}},
+  { type:'node',id:2252,lat:52.1917,lon:-1.7083, tags:{nameZh:'莎士比亚故居',name:'Shakespeare\'s Birthplace',historic:'monument',website:'https://www.shakespeare.org.uk','addr:city':'Stratford-upon-Avon',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2253,lat:55.0080,lon:-1.4310, tags:{nameZh:'安尼克城堡',name:'Alnwick Castle',historic:'castle',website:'https://www.alnwickcastle.com','addr:city':'Northumberland',opening_hours:'Mo-Su 10:00-17:30 (seasonal)'}},
+  { type:'node',id:2254,lat:55.6713,lon:-2.0035, tags:{nameZh:'巴姆堡城堡',name:'Bamburgh Castle',historic:'castle',website:'https://www.bamburghcastle.com','addr:city':'Northumberland',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2255,lat:51.7520,lon:-1.2577, tags:{nameZh:'牛津大学',name:'University of Oxford',historic:'monument','addr:city':'Oxford'}},
+  { type:'node',id:2256,lat:51.5099,lon:-0.1341, tags:{nameZh:'特拉法加广场',name:'Trafalgar Square',historic:'monument','addr:city':'London'}},
+  { type:'node',id:2257,lat:51.5007,lon:-0.1246, tags:{nameZh:'大本钟',name:'Big Ben',historic:'monument','addr:city':'London'}},
+  { type:'node',id:2258,lat:51.5138,lon:-0.0984, tags:{nameZh:'圣保罗大教堂',name:'St Paul\'s Cathedral',historic:'monument',website:'https://www.stpauls.co.uk','addr:city':'London',opening_hours:'Mo-Sa 08:30-16:30'}},
+  { type:'node',id:2259,lat:52.2046,lon:0.1180, tags:{nameZh:'剑桥大学',name:'University of Cambridge',historic:'monument','addr:city':'Cambridge'}},
+  { type:'node',id:2260,lat:55.0486,lon:-1.6897, tags:{nameZh:'哈德良长城',name:'Hadrian\'s Wall',historic:'ruins','addr:city':'Northumberland'}},
+  { type:'node',id:2261,lat:51.5018,lon:-0.0032, tags:{nameZh:'格林威治皇家天文台',name:'Royal Observatory',historic:'monument',website:'https://www.rmg.co.uk','addr:city':'London',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2262,lat:51.4768,lon:-3.1680, tags:{nameZh:'卡迪夫城堡',name:'Cardiff Castle',historic:'castle',website:'https://www.cardiffcastle.com','addr:city':'Cardiff',opening_hours:'Mo-Su 09:00-17:00'}},
+  { type:'node',id:2263,lat:54.6000,lon:-5.9200, tags:{nameZh:'贝尔法斯特泰坦尼克号',name:'Titanic Belfast',historic:'monument',website:'https://www.titanicbelfast.com','addr:city':'Belfast',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2264,lat:55.8555,lon:-4.2900, tags:{nameZh:'格拉斯哥大教堂',name:'Glasgow Cathedral',historic:'monument','addr:city':'Glasgow',opening_hours:'Mo-Su 09:30-17:30'}},
+  { type:'node',id:2265,lat:51.3780,lon:-2.3560, tags:{nameZh:'巴斯皇家新月',name:'Royal Crescent Bath',historic:'monument','addr:city':'Bath'}},
+  { type:'node',id:2266,lat:54.9740,lon:-1.6120, tags:{nameZh:'纽卡斯尔城堡',name:'Newcastle Castle',historic:'castle','addr:city':'Newcastle',opening_hours:'Mo-Su 10:00-17:00'}},
+  { type:'node',id:2267,lat:52.3557,lon:-1.1743, tags:{nameZh:'凯尼尔沃思城堡',name:'Kenilworth Castle',historic:'castle',website:'https://www.english-heritage.org.uk','addr:city':'Warwickshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+  { type:'node',id:2268,lat:53.0556,lon:-2.3880, tags:{nameZh:'比斯顿城堡',name:'Beeston Castle',historic:'castle','addr:city':'Cheshire',opening_hours:'Mo-Su 10:00-17:00 (seasonal)'}},
+
+  // NATURE (~20)
+  { type:'node',id:2270,lat:54.4609,lon:-3.0886, tags:{nameZh:'湖区国家公园',name:'Lake District National Park',leisure:'nature_reserve','addr:city':'Lake District'}},
+  { type:'node',id:2271,lat:53.3500,lon:-1.7700, tags:{nameZh:'峰区国家公园',name:'Peak District National Park',leisure:'nature_reserve','addr:city':'Peak District'}},
+  { type:'node',id:2272,lat:53.0667,lon:-3.9167, tags:{nameZh:'斯诺登尼亚',name:'Snowdonia National Park',leisure:'nature_reserve','addr:city':'Wales'}},
+  { type:'node',id:2273,lat:57.0000,lon:-5.0000, tags:{nameZh:'苏格兰高地',name:'Scottish Highlands',leisure:'nature_reserve','addr:city':'Scotland'}},
+  { type:'node',id:2274,lat:50.8600,lon:-1.6000, tags:{nameZh:'新森林',name:'New Forest National Park',leisure:'nature_reserve','addr:city':'Hampshire'}},
+  { type:'node',id:2275,lat:51.8500,lon:-1.6000, tags:{nameZh:'科茨沃尔德',name:'Cotswolds Area of Outstanding Natural Beauty',leisure:'nature_reserve','addr:city':'Cotswolds'}},
+  { type:'node',id:2276,lat:50.4000,lon:-5.0000, tags:{nameZh:'康沃尔海岸',name:'Cornwall Coast Path',leisure:'nature_reserve','addr:city':'Cornwall'}},
+  { type:'node',id:2277,lat:56.6833,lon:-5.1000, tags:{nameZh:'本尼维斯山',name:'Ben Nevis',leisure:'nature_reserve','addr:city':'Fort William'}},
+  { type:'node',id:2278,lat:57.3200,lon:-4.4200, tags:{nameZh:'尼斯湖',name:'Loch Ness',leisure:'nature_reserve','addr:city':'Inverness'}},
+  { type:'node',id:2279,lat:52.5186,lon:-3.7367, tags:{nameZh:'卡德尔伊德里斯山',name:'Cadair Idris',leisure:'nature_reserve','addr:city':'Wales'}},
+  { type:'node',id:2280,lat:54.3100,lon:-2.3200, tags:{nameZh:'约克郡山谷',name:'Yorkshire Dales National Park',leisure:'nature_reserve','addr:city':'Yorkshire'}},
+  { type:'node',id:2281,lat:55.3550,lon:-3.4350, tags:{nameZh:'苏格兰低地森林',name:'Galloway Forest Park',leisure:'nature_reserve','addr:city':'Scotland'}},
+  { type:'node',id:2282,lat:51.0750,lon:-3.2100, tags:{nameZh:'埃克斯摩尔',name:'Exmoor National Park',leisure:'nature_reserve','addr:city':'Somerset'}},
+  { type:'node',id:2283,lat:55.3800,lon:-2.0900, tags:{nameZh:'诺森伯兰国家公园',name:'Northumberland National Park',leisure:'nature_reserve','addr:city':'Northumberland'}},
+  { type:'node',id:2284,lat:51.0000,lon:-0.7000, tags:{nameZh:'南唐斯',name:'South Downs National Park',leisure:'nature_reserve','addr:city':'Sussex'}},
+  { type:'node',id:2285,lat:50.6500,lon:-3.4500, tags:{nameZh:'达特穆尔',name:'Dartmoor National Park',leisure:'nature_reserve','addr:city':'Devon'}},
+  { type:'node',id:2286,lat:52.6600,lon:1.5000, tags:{nameZh:'诺福克湿地',name:'Norfolk Broads National Park',leisure:'nature_reserve','addr:city':'Norfolk'}},
+  { type:'node',id:2287,lat:51.6200,lon:-0.5800, tags:{nameZh:'比肯斯菲尔德',name:'Burnham Beeches',leisure:'nature_reserve','addr:city':'Buckinghamshire'}},
+  { type:'node',id:2288,lat:52.7600,lon:-2.3200, tags:{nameZh:'什罗普郡山丘',name:'Shropshire Hills',leisure:'nature_reserve','addr:city':'Shropshire'}},
+
+  // PLAYGROUNDS, POOLS, FARMS (~80+)
+  // Children's Farms
+  { type:'node',id:2300,lat:51.5500,lon:-0.1500, tags:{nameZh:'伦敦肯特什镇城市农场',name:'Kentish Town City Farm',tourism:'children_farm','addr:city':'London'}},
+  { type:'node',id:2301,lat:51.5340,lon:-0.0580, tags:{nameZh:'伦敦哈克尼城市农场',name:'Hackney City Farm',tourism:'children_farm','addr:city':'London'}},
+  { type:'node',id:2302,lat:51.4710,lon:-0.0700, tags:{nameZh:'萨里码头农场',name:'Surrey Docks Farm',tourism:'children_farm','addr:city':'London'}},
+  { type:'node',id:2303,lat:53.4780,lon:-2.2350, tags:{nameZh:'曼彻斯特儿童农场',name:'Wythenshawe Community Farm',tourism:'children_farm','addr:city':'Manchester'}},
+  { type:'node',id:2304,lat:52.4580,lon:-1.7000, tags:{nameZh:'伯明翰儿童农场',name:'Ash End Farm Birmingham',tourism:'children_farm','addr:city':'Birmingham'}},
+  { type:'node',id:2305,lat:53.9580,lon:-1.0900, tags:{nameZh:'约克儿童农场',name:'Piglets Adventure Farm York',tourism:'children_farm','addr:city':'York'}},
+  { type:'node',id:2306,lat:51.3800,lon:-2.3500, tags:{nameZh:'巴斯儿童农场',name:'Bath City Farm',tourism:'children_farm','addr:city':'Bath'}},
+  { type:'node',id:2307,lat:55.9600,lon:-3.1700, tags:{nameZh:'爱丁堡戈雷桥农场',name:'Gorgie City Farm Edinburgh',tourism:'children_farm','addr:city':'Edinburgh'}},
+  { type:'node',id:2308,lat:51.4540,lon:-2.5900, tags:{nameZh:'布里斯托尔温瑟姆农场',name:'Windmill Hill City Farm Bristol',tourism:'children_farm','addr:city':'Bristol'}},
+  { type:'node',id:2309,lat:53.4050,lon:-2.9820, tags:{nameZh:'利物浦儿童农场',name:'Acorn Farm Liverpool',tourism:'children_farm','addr:city':'Liverpool'}},
+
+  // Swimming Pools
+  { type:'node',id:2320,lat:51.5020,lon:-0.1800, tags:{nameZh:'伦敦海德公园游泳湖',name:'Serpentine Lido',leisure:'swimming_pool','addr:city':'London'}},
+  { type:'node',id:2321,lat:53.4750,lon:-2.2360, tags:{nameZh:'曼彻斯特水上乐园',name:'Manchester Aquatics Centre',leisure:'swimming_pool','addr:city':'Manchester'}},
+  { type:'node',id:2322,lat:55.9470,lon:-3.1850, tags:{nameZh:'爱丁堡皇家英联邦泳池',name:'Royal Commonwealth Pool Edinburgh',leisure:'swimming_pool','addr:city':'Edinburgh'}},
+  { type:'node',id:2323,lat:51.4560,lon:-2.5900, tags:{nameZh:'布里斯托尔莱兹泳池',name:'Bristol South Swimming Pool',leisure:'swimming_pool','addr:city':'Bristol'}},
+  { type:'node',id:2324,lat:53.8000,lon:-1.5500, tags:{nameZh:'利兹国际泳池',name:'Leeds International Pool',leisure:'swimming_pool','addr:city':'Leeds'}},
+  { type:'node',id:2325,lat:52.4560,lon:-1.7100, tags:{nameZh:'伯明翰游泳中心',name:'Gosta Green Swimming Pool Birmingham',leisure:'swimming_pool','addr:city':'Birmingham'}},
+
+  // Playgrounds
+  { type:'node',id:2340,lat:51.5073,lon:-0.1657, tags:{nameZh:'戴安娜王妃纪念游乐场',name:'Diana Memorial Playground',leisure:'playground',website:'https://www.royalparks.org.uk','addr:city':'London'}},
+  { type:'node',id:2341,lat:51.5320,lon:-0.1540, tags:{nameZh:'摄政公园游乐场',name:'Regent\'s Park Playground',leisure:'playground','addr:city':'London'}},
+  { type:'node',id:2342,lat:51.4722,lon:-0.0001, tags:{nameZh:'格林威治公园游乐场',name:'Greenwich Park Playground',leisure:'playground','addr:city':'London'}},
+  { type:'node',id:2343,lat:53.4660,lon:-2.2340, tags:{nameZh:'曼彻斯特海顿公园游乐场',name:'Heaton Park Playground Manchester',leisure:'playground','addr:city':'Manchester'}},
+  { type:'node',id:2344,lat:55.9540,lon:-3.1830, tags:{nameZh:'爱丁堡王子街花园游乐场',name:'Princes Street Gardens Playground Edinburgh',leisure:'playground','addr:city':'Edinburgh'}},
+  { type:'node',id:2345,lat:53.4100,lon:-2.9700, tags:{nameZh:'利物浦赛夫顿公园游乐场',name:'Sefton Park Playground Liverpool',leisure:'playground','addr:city':'Liverpool'}},
+  { type:'node',id:2346,lat:51.4560,lon:-2.6200, tags:{nameZh:'布里斯托尔布兰登山公园游乐场',name:'Brandon Hill Playground Bristol',leisure:'playground','addr:city':'Bristol'}},
+  { type:'node',id:2347,lat:52.4700,lon:-1.9100, tags:{nameZh:'伯明翰坎农山公园游乐场',name:'Cannon Hill Park Playground Birmingham',leisure:'playground','addr:city':'Birmingham'}},
+  { type:'node',id:2348,lat:53.8050,lon:-1.5200, tags:{nameZh:'利兹朗德海公园游乐场',name:'Roundhay Park Playground Leeds',leisure:'playground','addr:city':'Leeds'}},
+  { type:'node',id:2349,lat:53.3850,lon:-1.4600, tags:{nameZh:'谢菲尔德植物园游乐场',name:'Sheffield Botanical Gardens Playground',leisure:'playground','addr:city':'Sheffield'}},
+  { type:'node',id:2350,lat:51.7520,lon:-1.2600, tags:{nameZh:'牛津大学公园游乐场',name:'University Parks Playground Oxford',leisure:'playground','addr:city':'Oxford'}},
+  { type:'node',id:2351,lat:52.2050,lon:0.1250, tags:{nameZh:'剑桥公园游乐场',name:'Jesus Green Playground Cambridge',leisure:'playground','addr:city':'Cambridge'}},
+  { type:'node',id:2352,lat:53.9600,lon:-1.0800, tags:{nameZh:'约克博物馆花园游乐场',name:'Museum Gardens Playground York',leisure:'playground','addr:city':'York'}},
+  { type:'node',id:2353,lat:51.3820,lon:-2.3600, tags:{nameZh:'巴斯皇家维多利亚公园游乐场',name:'Royal Victoria Park Playground Bath',leisure:'playground','addr:city':'Bath'}},
+  { type:'node',id:2354,lat:50.8200,lon:-0.1400, tags:{nameZh:'布莱顿公园游乐场',name:'Preston Park Playground Brighton',leisure:'playground','addr:city':'Brighton'}},
+  { type:'node',id:2355,lat:51.4850,lon:-3.1800, tags:{nameZh:'卡迪夫比特公园游乐场',name:'Bute Park Playground Cardiff',leisure:'playground','addr:city':'Cardiff'}},
+  { type:'node',id:2356,lat:55.8600,lon:-4.2700, tags:{nameZh:'格拉斯哥凯尔文格罗夫公园游乐场',name:'Kelvingrove Park Playground Glasgow',leisure:'playground','addr:city':'Glasgow'}},
+  { type:'node',id:2357,lat:54.5950,lon:-5.9300, tags:{nameZh:'贝尔法斯特植物园游乐场',name:'Botanic Gardens Playground Belfast',leisure:'playground','addr:city':'Belfast'}},
+  { type:'node',id:2358,lat:54.9750,lon:-1.6150, tags:{nameZh:'纽卡斯尔展览公园游乐场',name:'Exhibition Park Playground Newcastle',leisure:'playground','addr:city':'Newcastle'}},
+  { type:'node',id:2359,lat:52.9530,lon:-1.1550, tags:{nameZh:'诺丁汉阿伯顿公园游乐场',name:'Arboretum Playground Nottingham',leisure:'playground','addr:city':'Nottingham'}},
+  { type:'node',id:2360,lat:53.7550,lon:-2.7100, tags:{nameZh:'布莱克浦斯坦利公园游乐场',name:'Stanley Park Playground Blackpool',leisure:'playground','addr:city':'Blackpool'}},
+  { type:'node',id:2361,lat:52.6300,lon:-1.1350, tags:{nameZh:'莱斯特阿比公园游乐场',name:'Abbey Park Playground Leicester',leisure:'playground','addr:city':'Leicester'}},
+  { type:'node',id:2362,lat:50.7200,lon:-1.8800, tags:{nameZh:'伯恩茅斯花园游乐场',name:'Lower Gardens Playground Bournemouth',leisure:'playground','addr:city':'Bournemouth'}},
+  { type:'node',id:2363,lat:53.2300,lon:-2.8900, tags:{nameZh:'切斯特格罗夫公园游乐场',name:'Grosvenor Park Playground Chester',leisure:'playground','addr:city':'Chester'}},
+  { type:'node',id:2364,lat:56.1200,lon:-3.9400, tags:{nameZh:'斯特灵城堡游乐场',name:'Stirling Castle Playground',leisure:'playground','addr:city':'Stirling'}},
+
+  // More attractions for count
+  { type:'node',id:2370,lat:51.5033,lon:-0.1195, tags:{nameZh:'伦敦眼',name:'London Eye',tourism:'attraction',website:'https://www.londoneye.com','addr:city':'London'}},
+  { type:'node',id:2371,lat:51.5081,lon:-0.0759, tags:{nameZh:'伦敦塔桥',name:'Tower Bridge London',tourism:'attraction','addr:city':'London'}},
+  { type:'node',id:2372,lat:53.4723,lon:-2.2936, tags:{nameZh:'老特拉福德球场',name:'Old Trafford Stadium Tour',tourism:'attraction',website:'https://www.manutd.com','addr:city':'Manchester'}},
+  { type:'node',id:2373,lat:53.4308,lon:-2.9608, tags:{nameZh:'安菲尔德球场',name:'Anfield Stadium Tour',tourism:'attraction',website:'https://www.liverpoolfc.com','addr:city':'Liverpool'}},
+  { type:'node',id:2374,lat:53.4640,lon:-2.2913, tags:{nameZh:'曼彻斯特博物馆',name:'Manchester Museum',tourism:'museum',website:'https://www.museum.manchester.ac.uk','addr:city':'Manchester',opening_hours:'Tu-Su 10:00-17:00'}},
+  { type:'node',id:2375,lat:51.5084,lon:-0.0762, tags:{nameZh:'伦敦地牢',name:'London Dungeon',tourism:'attraction',website:'https://www.thedungeons.com/london','addr:city':'London'}},
+  { type:'node',id:2376,lat:51.5032,lon:-0.0195, tags:{nameZh:'O2体验馆',name:'Up at The O2',tourism:'attraction',website:'https://www.theo2.co.uk','addr:city':'London'}},
+  { type:'node',id:2377,lat:51.5032,lon:-0.0015, tags:{nameZh:'国家海事博物馆格林威治',name:'Cutty Sark Gardens',tourism:'attraction','addr:city':'London'}},
+  { type:'node',id:2378,lat:51.7770,lon:-1.2630, tags:{nameZh:'牛津基督教堂学院',name:'Christ Church Oxford',tourism:'attraction','addr:city':'Oxford'}},
+  { type:'node',id:2379,lat:52.2044,lon:0.1150, tags:{nameZh:'剑桥国王学院',name:'King\'s College Cambridge',tourism:'attraction','addr:city':'Cambridge'}},
+];
+
+// -- OPENING HOURS TRANSLATION --
+function translateHours(str) {
+  if (!str) return str;
+  if (LANG.current === 'zh') {
+    return str
+      .replace(/\bMo\b/g,'周一').replace(/\bTu\b/g,'周二').replace(/\bWe\b/g,'周三')
+      .replace(/\bTh\b/g,'周四').replace(/\bFr\b/g,'周五').replace(/\bSa\b/g,'周六').replace(/\bSu\b/g,'周日')
+      .replace(/\(seasonal\)/g,'(季节性开放)')
+      .replace(/Check schedule/gi,'请查看官网');
+  }
+  return str;
+}
+
+function getCategoryForVenue(tags) {
+  for (const cat of CATEGORIES) {
+    for (const [key, vals] of Object.entries(cat.tags)) {
+      const val = tags[key];
+      if (val && vals.includes(val)) return cat;
+    }
+  }
+  if (tags.man_made === 'windmill') return CATEGORIES.find(c => c.id === 'historic');
+  if (tags.historic) return CATEGORIES.find(c => c.id === 'historic');
+  if (tags.natural === 'beach') return CATEGORIES.find(c => c.id === 'beach');
+  if (tags.tourism === 'visitor_centre') return CATEGORIES.find(c => c.id === 'visitor');
+  if (tags.amenity === 'arts_centre') return CATEGORIES.find(c => c.id === 'theatre');
+  return CATEGORIES[CATEGORIES.length - 1];
+}
+
+function getCategoryById(id) {
+  return CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
+}
+
+let state = {
+  allVenues: [],
+  filtered: [],
+  displayed: 0,
+  activeCategory: null,
+  activeCardId: null,
+  currentRegion: '',
+  markers: new Map(),
+  favorites: JSON.parse(localStorage.getItem('uk-kids-explorer-favorites') || '[]'),
+  showFavoritesOnly: false,
+  userLocation: null,
+  userLocationMarker: null,
+};
+const PAGE_SIZE = 30;
+
+const map = L.map('map', { zoomControl: true }).setView([54.0, -2.0], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 19,
+}).addTo(map);
+
+const markersLayer = L.markerClusterGroup({
+  maxClusterRadius: 45, spiderfyOnMaxZoom: true, showCoverageOnHover: false,
+  zoomToBoundsOnClick: true, disableClusteringAtZoom: 14, chunkedLoading: true,
+  chunkInterval: 100, chunkDelay: 10,
+}).addTo(map);
+
+function buildFilterBar() {
+  const bar = document.getElementById('filterBar');
+  const label = document.getElementById('filterLabel');
+  bar.innerHTML = '';
+  bar.appendChild(label);
+  label.textContent = T[LANG.current].filterLabel;
+  const catCounts = {};
+  state.allVenues.forEach(v => { catCounts[v.category.id] = (catCounts[v.category.id] || 0) + 1; });
+  const totalCount = state.allVenues.length;
+  const favCount = state.favorites.length;
+  const favChip = document.createElement('button');
+  favChip.className = 'filter-chip' + (state.showFavoritesOnly ? ' active' : '');
+  if (state.showFavoritesOnly) { favChip.style.background = '#E05A1E'; favChip.style.borderColor = '#E05A1E'; }
+  favChip.innerHTML = `❤️ ${T[LANG.current].favoritesLabel}${favCount > 0 ? ` <span class="filter-chip-count">${favCount}</span>` : ''}`;
+  favChip.onclick = () => toggleFavoritesFilter();
+  bar.appendChild(favChip);
+  const allChip = document.createElement('button');
+  allChip.className = 'filter-chip' + (!state.showFavoritesOnly && state.activeCategory === null ? ' active' : '');
+  allChip.style.background = !state.showFavoritesOnly && state.activeCategory === null ? '#1A2B4A' : '';
+  allChip.style.borderColor = !state.showFavoritesOnly && state.activeCategory === null ? '#1A2B4A' : '';
+  allChip.innerHTML = totalCount > 0 ? `${T[LANG.current].allLabel} <span class="filter-chip-count">${totalCount}</span>` : T[LANG.current].allLabel;
+  allChip.onclick = () => setFilter(null);
+  bar.appendChild(allChip);
+  CATEGORIES.forEach(cat => {
+    const count = catCounts[cat.id] || 0;
+    const chip = document.createElement('button');
+    const isActive = !state.showFavoritesOnly && state.activeCategory === cat.id;
+    chip.className = 'filter-chip' + (isActive ? ' active' : '') + (totalCount > 0 && count === 0 ? ' no-data' : '');
+    if (isActive) { chip.style.background = cat.color; chip.style.borderColor = cat.color; }
+    const countBadge = totalCount > 0 ? ` <span class="filter-chip-count">${count}</span>` : '';
+    chip.innerHTML = `${cat.emoji} ${cat[LANG.current] || cat.en}${countBadge}`;
+    chip.onclick = () => setFilter(cat.id);
+    bar.appendChild(chip);
+  });
+  if (typeof buildAgeFilterPills === 'function') buildAgeFilterPills();
+}
+
+function setFilter(catId) {
+  state.activeCategory = catId;
+  state.showFavoritesOnly = false;
+  state.displayed = 0;
+  if (state.allVenues.length === 0) {
+    buildFilterBar();
+    const cat = catId ? CATEGORIES.find(c => c.id === catId) : null;
+    const catName = cat ? (cat[LANG.current] || cat.en) : '';
+    if (catId && cat) {
+      document.getElementById('emptyTitle').textContent = T[LANG.current].browseCategory(catName);
+      document.getElementById('emptyDesc').textContent = T[LANG.current].browseCategoryDesc;
+    } else { updateEmptyStateText(); }
+    searchInput.focus();
+    return;
+  }
+  applyFilter();
+  buildFilterBar();
+}
+
+function applyFilter() {
+  let list = state.activeCategory ? state.allVenues.filter(v => v.category.id === state.activeCategory) : [...state.allVenues];
+  if (state.showFavoritesOnly) { list = list.filter(v => state.favorites.includes(v.id)); }
+  if (typeof activeAgeFilter !== 'undefined' && activeAgeFilter !== 'all') {
+    const ageRange = typeof AGE_FILTER_RANGES !== 'undefined' ? AGE_FILTER_RANGES.find(a => a.id === activeAgeFilter) : null;
+    if (ageRange && ageRange.categories) { list = list.filter(v => ageRange.categories.includes(v.category.id)); }
+  }
+  if (state.userLocation) {
+    list.forEach(v => { v._userDist = haversine(state.userLocation[0], state.userLocation[1], v.lat, v.lon); });
+    list.sort((a, b) => a._userDist - b._userDist);
+  }
+  state.filtered = list;
+  renderList();
+  renderMarkers();
+}
+
+const searchInput = document.getElementById('searchInput');
+const autocompleteEl = document.getElementById('autocomplete');
+let focusedIdx = -1;
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim().toLowerCase();
+  if (!q) { autocompleteEl.classList.remove('open'); return; }
+  const regionMatches = UK_REGIONS.filter(r => r.name.toLowerCase().includes(q) || (r.nameZh && r.nameZh.includes(q))).slice(0, 5);
+  const venueSource = state.allVenues.length > 0 ? state.allVenues : [];
+  const staticVenueMatches = STATIC_UK_VENUES.filter(v => v.tags.name && (v.tags.name.toLowerCase().includes(q) || (v.tags.nameZh && v.tags.nameZh.includes(q)))).map(v => ({ name: v.tags.name, nameZh: v.tags.nameZh || '', type: 'venue', lat: v.lat, lon: v.lon, emoji: getCategoryForVenue(v.tags).emoji, catLabel: getCategoryForVenue(v.tags)[LANG.current] || getCategoryForVenue(v.tags).en, city: v.tags['addr:city'] || '', id: `${v.type}/${v.id}` }));
+  const loadedVenueMatches = venueSource.filter(v => (v.name.toLowerCase().includes(q) || (v.nameZh && v.nameZh.includes(q))) && !staticVenueMatches.find(s => s.name === v.name)).map(v => ({ name: v.name, nameZh: v.nameZh || '', type: 'venue', lat: v.lat, lon: v.lon, emoji: v.category.emoji, catLabel: v.category[LANG.current] || v.category.en, city: v.address ? v.address.split(',').pop().trim() : '', id: v.id }));
+  const allVenueMatches = [...staticVenueMatches, ...loadedVenueMatches].slice(0, 5);
+  renderAutocomplete(regionMatches, q, allVenueMatches);
+});
+
+searchInput.addEventListener('keydown', e => {
+  const items = autocompleteEl.querySelectorAll('.autocomplete-item');
+  if (e.key === 'ArrowDown') { e.preventDefault(); focusedIdx = Math.min(focusedIdx + 1, items.length - 1); items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx)); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); focusedIdx = Math.max(focusedIdx - 1, 0); items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx)); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (focusedIdx >= 0 && items[focusedIdx]) { items[focusedIdx].click(); } else if (searchInput.value.trim()) { searchRegion(searchInput.value.trim()); } }
+  else if (e.key === 'Escape') { autocompleteEl.classList.remove('open'); }
+});
+
+document.addEventListener('click', e => { if (!e.target.closest('.header-search')) autocompleteEl.classList.remove('open'); });
+
+function renderAutocomplete(regionMatches, q, venueMatches) {
+  focusedIdx = -1;
+  venueMatches = venueMatches || [];
+  if (!regionMatches.length && !venueMatches.length) { autocompleteEl.classList.remove('open'); return; }
+  const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let html = '';
+  if ('near me'.includes(q) || '我附近'.includes(q)) {
+    html += `<div class="autocomplete-item" onclick="activateNearMe()"><span class="venue-emoji">📍</span><span>${T[LANG.current].nearMe}</span><span class="region-type">${T[LANG.current].nearMeLocationType}</span></div>`;
+  }
+  if (venueMatches.length > 0) {
+    html += `<div class="autocomplete-section-label">${T[LANG.current].venuesSection}</div>`;
+    html += venueMatches.map(v => { const safeName = escapeHtml(v.name); const highlighted = safeName.replace(new RegExp(`(${safeQ})`, 'gi'), '<strong style="color:var(--primary)">$1</strong>'); return `<div class="autocomplete-item" onclick="searchVenueFromAutocomplete(${v.lat},${v.lon},'${v.id.replace(/'/g,"\\'")}','${v.name.replace(/'/g,"\\'")}')"><span class="venue-emoji">${v.emoji}</span><span>${highlighted}<span class="venue-result-detail"> &middot; ${v.city}</span></span><span class="region-type">${v.catLabel}</span></div>`; }).join('');
+  }
+  if (regionMatches.length > 0) {
+    html += `<div class="autocomplete-section-label">${T[LANG.current].regionsSection}</div>`;
+    html += regionMatches.map(r => { const safeName = escapeHtml(r.name); const highlighted = safeName.replace(new RegExp(`(${safeQ})`, 'gi'), '<strong style="color:var(--primary)">$1</strong>'); const zhLabel = r.nameZh ? ` ${r.nameZh}` : ''; const escapedName = r.name.replace(/'/g, "\\'").replace(/[<>"]/g, ''); return `<div class="autocomplete-item" onclick="searchRegion('${escapedName}')"><span>${highlighted}${zhLabel}</span><span class="region-type">${r.type === 'province' ? 'Region 地区' : 'City 城市'}</span></div>`; }).join('');
+  }
+  autocompleteEl.innerHTML = html;
+  autocompleteEl.classList.add('open');
+}
+
+function clearSearch() { searchInput.value = ''; autocompleteEl.classList.remove('open'); searchInput.focus(); fullReset(); }
+
+function resetHome() {
+  searchInput.value = ''; autocompleteEl.classList.remove('open');
+  state.activeCategory = null; state.activeCardId = null; state.showFavoritesOnly = false; state.displayed = 0;
+  if (typeof activeAgeFilter !== 'undefined') activeAgeFilter = 'all';
+  markersLayer.clearLayers(); state.markers.clear();
+  map.setView([54.0, -2.0], 6);
+  showOverlay(false);
+  if (typeof closeDetailPanel === 'function') closeDetailPanel();
+  loadStaticVenues();
+}
+
+function fullReset() {
+  state.allVenues = []; state.filtered = []; state.displayed = 0; state.activeCategory = null; state.activeCardId = null; state.currentRegion = ''; state.showFavoritesOnly = false;
+  if (typeof activeAgeFilter !== 'undefined') activeAgeFilter = 'all';
+  markersLayer.clearLayers(); state.markers.clear(); searchInput.value = ''; autocompleteEl.classList.remove('open');
+  map.setView([54.0, -2.0], 6);
+  showOverlay(false);
+  document.getElementById('resultCountText').textContent = T[LANG.current].resultLabel;
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('venueList').style.display = 'none';
+  document.getElementById('venueList').innerHTML = '';
+  document.getElementById('categorySummary').innerHTML = '';
+  closeDetailPanel(); updateEmptyStateText(); buildFilterBar();
+}
+
+function showToast(message, duration = 3000) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(toast._timer); toast._timer = setTimeout(() => toast.classList.remove('show'), duration); }
+
+const scrollTopBtn = document.getElementById('scrollTopBtn');
+document.getElementById('venueList').addEventListener('scroll', function() { scrollTopBtn.classList.toggle('visible', this.scrollTop > 200); });
+scrollTopBtn.addEventListener('click', () => { document.getElementById('venueList').scrollTo({ top: 0, behavior: 'smooth' }); });
+
+async function searchRegion(name) {
+  searchInput.value = name; autocompleteEl.classList.remove('open'); state.currentRegion = name; showOverlay(true);
+  document.getElementById('resultCountText').innerHTML = T[LANG.current].searching;
+  try {
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name + ' United Kingdom')}&format=json&limit=1&addressdetails=1`;
+    const geoRes = await fetch(nominatimUrl); const geoData = await geoRes.json();
+    if (!geoData.length) { showToast(T[LANG.current].regionNotFound); showOverlay(false); return; }
+    const place = geoData[0]; const [s, n, w, e] = place.boundingbox.map(Number); const bbox = `${s},${w},${n},${e}`;
+    map.fitBounds([[s, w], [n, e]], { padding: [20, 20] });
+    const overpassQuery = buildOverpassQuery(bbox);
+    const osmData = await fetchOverpass(overpassQuery);
+    processOSMData(osmData.elements);
+    showOverlay(false);
+  } catch (err) { console.error('Search error:', err); showOverlay(false); document.getElementById('resultCountText').innerHTML = `&#9888;&#65039; Error: ${err.message || err} - please check your connection and retry`; }
+}
+
+const OVERPASS_ENDPOINTS = ['https://overpass.kumi.systems/api/interpreter','https://overpass.openstreetmap.fr/api/interpreter','https://overpass-api.de/api/interpreter'];
+
+function buildOverpassQuery(bbox) {
+  const b = bbox;
+  return `[out:json][timeout:60];
+(
+  node["name"]["tourism"~"museum|gallery|aquarium|zoo|theme_park|attraction|visitor_centre"](${b});
+  node["name"]["leisure"~"playground|water_park|ice_rink|miniature_golf|nature_reserve|marina"](${b});
+  node["name"]["amenity"~"theatre|cinema"](${b});
+  node["name"]["natural"="beach"](${b});
+  node["name"]["historic"~"castle|ruins|monument|fort|mill"](${b});
+  node["name"]["man_made"="windmill"](${b});
+  way["name"]["tourism"~"museum|gallery|aquarium|zoo|theme_park|attraction|visitor_centre"](${b});
+  way["name"]["leisure"~"playground|water_park|nature_reserve"](${b});
+  way["name"]["amenity"~"theatre|cinema"](${b});
+  way["name"]["natural"="beach"](${b});
+  way["name"]["historic"~"castle|ruins|fort|mill"](${b});
+  way["name"]["man_made"="windmill"](${b});
+  relation["name"]["tourism"~"museum|zoo|theme_park"](${b});
+  relation["name"]["leisure"="nature_reserve"](${b});
+  relation["name"]["natural"="beach"](${b});
+);
+out center;`;
+}
+
+const UK_BBOX = '49.80,-8.20,60.90,1.80';
+
+function buildCategoryQuery(catId, bbox) {
+  const cat = CATEGORIES.find(c => c.id === catId);
+  if (!cat) return buildOverpassQuery(bbox);
+  const stmts = [];
+  Object.entries(cat.tags).forEach(([key, vals]) => { const op = vals.length === 1 ? '=' : '~'; const val = vals.join('|'); ['node', 'way', 'relation'].forEach(t => stmts.push(`  ${t}["name"]["${key}"${op}"${val}"](${bbox});`)); });
+  return `[out:json][timeout:90];\n(\n${stmts.join('\n')}\n);\nout center;`;
+}
+
+async function fetchOverpass(query) {
+  let lastErr;
+  for (let i = 0; i < OVERPASS_ENDPOINTS.length; i++) {
+    const url = OVERPASS_ENDPOINTS[i] + '?data=' + encodeURIComponent(query);
+    const controller = new AbortController(); const tid = setTimeout(() => controller.abort(), 35000);
+    try { const res = await fetch(url, { signal: controller.signal }); clearTimeout(tid); if (res.ok) { const json = await res.json(); if (json.remark && /timed out|timeout/i.test(json.remark)) { lastErr = new Error('Server timeout'); continue; } return json; } lastErr = new Error(`HTTP ${res.status}`); } catch (e) { clearTimeout(tid); lastErr = e; }
+  }
+  throw lastErr || new Error('All Overpass endpoints failed');
+}
+
+function processOSMData(elements) {
+  const venues = []; const seen = new Set();
+  for (const el of elements) {
+    const tags = el.tags || {}; const name = tags.name || tags['name:en'];
+    if (!name) continue;
+    const lat = el.lat ?? el.center?.lat; const lon = el.lon ?? el.center?.lon;
+    if (!lat || !lon) continue;
+    const key = `${name.toLowerCase()}-${Math.round(lat*1000)}-${Math.round(lon*1000)}`;
+    if (seen.has(key)) continue; seen.add(key);
+    const cat = getCategoryForVenue(tags);
+    const rawWebsite = tags.website || tags['contact:website'] || tags['url'] || '';
+    const website = rawWebsite ? (rawWebsite.startsWith('http') ? rawWebsite : 'https://' + rawWebsite) : '';
+    const city = tags['addr:city'] || tags['addr:town'] || tags['addr:village'] || '';
+    const street = [tags['addr:street'], tags['addr:housenumber']].filter(Boolean).join(' ');
+    const address = [street, city].filter(Boolean).join(', ');
+    venues.push({ id: `${el.type}/${el.id}`, name, nameZh: tags['name:zh'] || tags['name:zh-Hans'] || tags.nameZh || '', lat, lon, category: cat, website, address, phone: tags.phone || tags['contact:phone'] || '', openingHours: tags.opening_hours || '', osmType: el.type, osmId: el.id });
+  }
+  venues.sort((a, b) => { if (a.category.id !== 'attraction' && b.category.id === 'attraction') return -1; if (a.category.id === 'attraction' && b.category.id !== 'attraction') return 1; return a.name.localeCompare(b.name); });
+  state.allVenues = venues; state.displayed = 0;
+  applyFilter(); buildFilterBar();
+  document.getElementById('resultCountText').innerHTML = venues.length ? T[LANG.current].found(venues.length, state.currentRegion) : T[LANG.current].notFound;
+  renderCategorySummary();
+}
+
+function renderList() {
+  const list = document.getElementById('venueList'); const empty = document.getElementById('emptyState');
+  if (state.allVenues.length === 0) { empty.style.display = 'flex'; list.style.display = 'none'; updateEmptyStateText(); if (state.activeCategory) { const cat = CATEGORIES.find(c => c.id === state.activeCategory); const catName = cat ? (cat[LANG.current] || cat.en) : ''; document.getElementById('emptyTitle').textContent = T[LANG.current].searchRegionFirst; document.getElementById('emptyDesc').textContent = T[LANG.current].searchRegionFirstDesc(catName); } return; }
+  if (state.filtered.length === 0) { empty.style.display = 'flex'; list.style.display = 'none'; const cat = CATEGORIES.find(c => c.id === state.activeCategory); const catName = cat ? (cat[LANG.current] || cat.en) : ''; document.getElementById('emptyTitle').textContent = T[LANG.current].noInRegion(catName, state.currentRegion); document.getElementById('emptyDesc').textContent = T[LANG.current].tryOtherCategory; return; }
+  empty.style.display = 'none'; list.style.display = 'flex';
+  const toShow = state.filtered.slice(0, state.displayed + PAGE_SIZE); state.displayed = toShow.length;
+  const frag = document.createDocumentFragment();
+  toShow.forEach(v => {
+    const card = document.createElement('div'); card.className = 'venue-card' + (v.id === state.activeCardId ? ' active' : ''); card.id = 'card-' + v.id.replace(/[^a-z0-9]/gi, '-');
+    const isFav = state.favorites.includes(v.id); const distHtml = v._userDist != null ? `<span class="venue-distance">📍 ${v._userDist.toFixed(1)} km</span>` : '';
+    card.innerHTML = `<button class="venue-fav-btn ${isFav ? 'favorited' : ''}" onclick="event.stopPropagation(); toggleFavorite('${v.id.replace(/'/g,"\\'")}', this)" title="${isFav ? 'Remove' : 'Add'}">${isFav ? '❤️' : '♡'}</button><div class="venue-card-top"><div class="venue-icon" style="background:${v.category.bg}">${v.category.emoji}</div><div class="venue-info"><div class="venue-name">${v.name}</div>${v.nameZh ? `<div class="venue-name-zh">${v.nameZh}</div>` : ''}<div class="venue-meta"><span class="venue-tag" style="background:${v.category.bg};color:${v.category.color}">${v.category[LANG.current] || v.category.en}</span>${distHtml}${v.address ? `<span class="venue-address"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="4" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 10 C2 7 0.5 5.5 0.5 4a4.5 4.5 0 019 0c0 1.5-1.5 3-4.5 6z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>${v.address}</span>` : ''}</div>${v.openingHours ? `<div class="venue-detail-row">\u{1F552} ${translateHours(v.openingHours)}</div>` : ''}${v.phone ? `<div class="venue-detail-row">\u{1F4DE} <a href="tel:${v.phone}">${v.phone}</a></div>` : ''}</div></div><div class="venue-actions">${v.website ? `<a class="btn-website" href="${v.website}" target="_blank" rel="noopener">${T[LANG.current].website}</a>` : `<span class="btn-website" style="opacity:.45;cursor:default">${T[LANG.current].noWebsite}</span>`}<a class="btn-nav" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lon}" target="_blank" rel="noopener">${T[LANG.current].navigate}</a><button class="btn-map" onclick="flyToVenue('${v.id}')">${T[LANG.current].flyTo}</button></div>`;
+    card.addEventListener('click', e => { if (e.target.closest('a,button')) return; selectVenue(v.id); });
+    frag.appendChild(card);
+  });
+  list.innerHTML = ''; list.appendChild(frag);
+  if (state.displayed < state.filtered.length) { const btn = document.createElement('button'); btn.className = 'load-more-btn'; btn.textContent = `${T[LANG.current].loadMore} (${state.filtered.length - state.displayed} more)`; btn.onclick = () => { renderList(); }; list.appendChild(btn); }
+}
+
+function renderCategorySummary() {
+  const el = document.getElementById('categorySummary'); if (!state.allVenues.length) { el.innerHTML = ''; return; }
+  const counts = {}; state.allVenues.forEach(v => { counts[v.category.id] = (counts[v.category.id] || 0) + 1; });
+  el.innerHTML = CATEGORIES.filter(cat => counts[cat.id]).map(cat => `<span class="category-summary-chip" style="background:${cat.bg};color:${cat.color}">${cat.emoji} ${counts[cat.id]}</span>`).join('');
+}
+
+function updateEmptyStateText() { document.getElementById('emptyTitle').textContent = T[LANG.current].emptyTitle; document.getElementById('emptyDesc').textContent = T[LANG.current].emptyDesc; }
+
+const _iconCache = {};
+function getIcon(cat) { if (!_iconCache[cat.id]) { _iconCache[cat.id] = L.divIcon({ html: `<div class="map-marker" style="background:${cat.color}"><div class="map-marker-inner">${cat.emoji}</div></div>`, className: '', iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -36] }); } return _iconCache[cat.id]; }
+
+function renderMarkers() {
+  markersLayer.clearLayers(); state.markers.clear(); const batch = [];
+  state.filtered.forEach(v => { const marker = L.marker([v.lat, v.lon], { icon: getIcon(v.category) }); marker.bindPopup(() => buildPopup(v), { maxWidth: 280, minWidth: 260 }); marker.on('click', () => selectVenue(v.id)); state.markers.set(v.id, marker); batch.push(marker); });
+  markersLayer.addLayers(batch);
+}
+
+function buildPopup(v) {
+  return `<div class="popup-content"><div class="popup-header"><div class="popup-icon" style="background:${v.category.bg}">${v.category.emoji}</div><div><div class="popup-name">${v.name}</div>${v.nameZh ? `<div class="popup-name-zh">${v.nameZh}</div>` : ''}</div></div>${v.address ? `<div class="popup-address">\u{1F4CD} ${v.address}</div>` : ''}${v.openingHours ? `<div class="popup-address">\u{1F552} ${translateHours(v.openingHours)}</div>` : ''}${v.phone ? `<div class="popup-address">\u{1F4DE} <a href="tel:${v.phone}" style="color:var(--primary);text-decoration:none">${v.phone}</a></div>` : ''}<div style="display:flex;gap:6px">${v.website ? `<a class="popup-website" href="${v.website}" target="_blank" rel="noopener" style="flex:1">${T[LANG.current].website}</a>` : ''}<a class="popup-website" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lon}" target="_blank" rel="noopener" style="flex:1;background:#4285F4">${T[LANG.current].navigate}</a></div></div>`;
+}
+
+function selectVenue(id) {
+  state.activeCardId = id; document.querySelectorAll('.venue-card').forEach(c => c.classList.remove('active'));
+  const cardEl = document.getElementById('card-' + id.replace(/[^a-z0-9]/gi, '-'));
+  if (cardEl) { cardEl.classList.add('active'); cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  const marker = state.markers.get(id); if (marker) { marker.openPopup(); }
+}
+
+function flyToVenue(id) { const v = state.allVenues.find(x => x.id === id); if (!v) return; map.flyTo([v.lat, v.lon], 16, { duration: 1 }); selectVenue(id); }
+
+function showOverlay(show) { const overlay = document.getElementById('mapOverlay'); document.getElementById('loadingText').textContent = T[LANG.current].loadingVenues; document.getElementById('loadingHint').textContent = show ? T[LANG.current].loadingHint : ''; overlay.classList.toggle('hidden', !show); }
+
+function setLang(lang) {
+  LANG.current = lang; document.querySelectorAll('.lang-btn').forEach(b => { b.classList.toggle('active', b.dataset.lang === lang); });
+  document.getElementById('searchInput').placeholder = T[lang].searchPlaceholder;
+  updateEmptyStateText(); buildFilterBar();
+  if (state.allVenues.length) { document.getElementById('resultCountText').innerHTML = T[lang].found(state.filtered.length, state.currentRegion); renderList(); renderMarkers(); renderCategorySummary(); } else { document.getElementById('resultCountText').textContent = T[lang].resultLabel; }
+  const wb = document.getElementById('weatherBanner'); if (wb && wb.style.display !== 'none') { document.getElementById('weatherBannerText').textContent = T[lang].weatherBannerText; document.getElementById('weatherBannerBtn').textContent = T[lang].weatherBannerBtn; }
+}
+
+function showSkeletons() { const list = document.getElementById('venueList'); document.getElementById('emptyState').style.display = 'none'; list.style.display = 'flex'; list.innerHTML = Array(4).fill(0).map(() => `<div class="skeleton-card"><div style="display:flex;gap:11px;align-items:center"><div class="skeleton" style="width:36px;height:36px;border-radius:50%;flex-shrink:0"></div><div style="flex:1"><div class="skeleton" style="height:12px;margin-bottom:8px;width:70%"></div><div class="skeleton" style="height:10px;width:45%"></div></div></div></div>`).join(''); }
+
+const _origSearch = searchRegion;
+window.searchRegion = async function(name) { showSkeletons(); return _origSearch(name); };
+
+function loadStaticVenues() { state.currentRegion = T[LANG.current].featuredRegion; processOSMData(STATIC_UK_VENUES); }
+
+// -- AI CHAT --
+const CITY_COORDS = {
+  london:[51.51,-0.13],edinburgh:[55.95,-3.19],manchester:[53.48,-2.24],birmingham:[52.48,-1.90],liverpool:[53.41,-2.98],bristol:[51.45,-2.60],oxford:[51.75,-1.26],cambridge:[52.20,0.12],bath:[51.38,-2.36],york:[53.96,-1.09],brighton:[50.82,-0.14],canterbury:[51.28,1.08],glasgow:[55.86,-4.26],cardiff:[51.48,-3.18],belfast:[54.60,-5.93],leeds:[53.80,-1.55],sheffield:[53.38,-1.47],nottingham:[52.95,-1.15],newcastle:[54.97,-1.61],blackpool:[53.79,-3.05],windsor:[51.48,-0.60],cornwall:[50.27,-5.05],
+  伦敦:[51.51,-0.13],爱丁堡:[55.95,-3.19],曼彻斯特:[53.48,-2.24],伯明翰:[52.48,-1.90],利物浦:[53.41,-2.98],布里斯托尔:[51.45,-2.60],牛津:[51.75,-1.26],剑桥:[52.20,0.12],巴斯:[51.38,-2.36],约克:[53.96,-1.09],布莱顿:[50.82,-0.14],格拉斯哥:[55.86,-4.26],卡迪夫:[51.48,-3.18],贝尔法斯特:[54.60,-5.93],
+};
+
+const INTEREST_MAP = {
+  '动物':['zoo','children_farm'],'动物园':['zoo'],'农场':['children_farm'],'博物馆':['museum'],'游乐园':['theme_park'],'室内':['indoor_playground','museum','aquarium'],'下雨':['indoor_playground','museum','aquarium'],'海滩':['beach'],'城堡':['historic'],'历史':['historic'],'自然':['nature'],'水族馆':['aquarium'],'运动':['sports'],'中餐':['chinese_restaurant'],'自助餐':['buffet'],
+  'animal':['zoo','children_farm'],'zoo':['zoo'],'farm':['children_farm'],'museum':['museum'],'theme park':['theme_park'],'indoor':['indoor_playground','museum','aquarium'],'rain':['indoor_playground','museum','aquarium'],'beach':['beach'],'castle':['historic'],'history':['historic'],'nature':['nature'],'aquarium':['aquarium'],'sport':['sports'],'chinese':['chinese_restaurant'],'buffet':['buffet'],'playground':['indoor_playground','playground'],
+};
+
+const AGE_HINTS = { '婴儿':1,'宝宝':2,'1岁':1,'2岁':2,'3岁':3,'幼儿':3,'小朋友':5,'4岁':4,'5岁':5,'6岁':6,'7岁':7,'8岁':8,'9岁':9,'10岁':10,'学龄':7,'toddler':2,'baby':1,'teenager':13 };
+
+function haversine(lat1,lon1,lat2,lon2) { const R = 6371; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180; const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
+
+function parseUserMessage(msg) {
+  const lower = msg.toLowerCase(); const result = { city: null, coords: null, categories: new Set(), age: null, maxDist: null, raw: msg };
+  for (const [name, coords] of Object.entries(CITY_COORDS)) { if (lower.includes(name.toLowerCase())) { result.city = name; result.coords = coords; break; } }
+  for (const [kw, cats] of Object.entries(INTEREST_MAP)) { if (lower.includes(kw.toLowerCase())) { cats.forEach(c => result.categories.add(c)); } }
+  for (const [kw, age] of Object.entries(AGE_HINTS)) { if (lower.includes(kw)) { result.age = age; break; } }
+  const distMatch = lower.match(/(\d+)\s*(km|公里|miles|min)/); if (distMatch) { const num = parseInt(distMatch[1]); result.maxDist = (distMatch[2] === 'miles') ? num * 1.6 : (distMatch[2] === 'min') ? num * 1.2 : num; }
+  return result;
+}
+
+function recommendVenues(parsed) {
+  let venues = [...STATIC_UK_VENUES].map(v => { const tags = v.tags || {}; const cat = getCategoryForVenue(tags); return { ...v, _cat: cat, _name: tags.name, _city: tags['addr:city'] || '' }; });
+  if (parsed.categories.size > 0) { venues = venues.filter(v => parsed.categories.has(v._cat.id)); }
+  if (parsed.coords) { venues.forEach(v => { v._dist = haversine(parsed.coords[0], parsed.coords[1], v.lat, v.lon); }); if (parsed.maxDist) { venues = venues.filter(v => v._dist <= parsed.maxDist); } venues.sort((a, b) => a._dist - b._dist); } else { venues.sort(() => Math.random() - 0.5); }
+  if (parsed.age !== null) { if (parsed.age <= 3) { const priority = ['children_farm', 'indoor_playground', 'playground', 'zoo']; venues.sort((a, b) => { const aP = priority.indexOf(a._cat.id); const bP = priority.indexOf(b._cat.id); if (aP >= 0 && bP < 0) return -1; if (aP < 0 && bP >= 0) return 1; return (a._dist || 0) - (b._dist || 0); }); } else if (parsed.age >= 8) { const priority = ['theme_park', 'sports', 'museum', 'historic']; venues.sort((a, b) => { const aP = priority.indexOf(a._cat.id); const bP = priority.indexOf(b._cat.id); if (aP >= 0 && bP < 0) return -1; if (aP < 0 && bP >= 0) return 1; return (a._dist || 0) - (b._dist || 0); }); } }
+  return venues.slice(0, 6);
+}
+
+function buildChatResponse(parsed, venues) {
+  const isZh = /[\u4e00-\u9fff]/.test(parsed.raw); const chatLang = isZh ? 'zh' : 'en'; let parts = [];
+  if (venues.length === 0) { return isZh ? '抱歉，没有找到完全匹配的场地。试试换个关键词？' : "Sorry, no exact matches found. Try different keywords?"; }
+  if (chatLang === 'zh') { let opener = '为你推荐以下场地'; if (parsed.city) opener = `在 ${parsed.city} 附近为你推荐`; if (parsed.age) opener += `（适合${parsed.age}岁孩子）`; opener += '：'; parts.push(opener); } else { let opener = 'Here are my recommendations'; if (parsed.city) opener = `Near ${parsed.city}, here are my picks`; if (parsed.age) opener += ` (for age ${parsed.age})`; opener += ':'; parts.push(opener); }
+  venues.forEach((v) => { const dist = v._dist ? ` (${v._dist.toFixed(1)}km)` : ''; const catLabel = v._cat[chatLang] || v._cat.en; parts.push(`\n${v._cat.emoji} <strong>${v._name}</strong>${dist}\n<span style="color:var(--text-muted);font-size:11px">${catLabel} &middot; ${v._city}</span>`); });
+  if (chatLang === 'zh') { parts.push('\n点击场地名称可在地图上查看位置。'); } else { parts.push('\nClick a venue name to see it on the map.'); }
+  return parts.join('');
+}
+
+let chatOpen = false;
+function toggleChat(open) { chatOpen = open; document.getElementById('chatPanel').classList.toggle('open', open); document.getElementById('chatFab').classList.toggle('hidden', open); if (open && document.getElementById('chatMessages').children.length === 0) { initChat(); } if (open) document.getElementById('chatInput').focus(); }
+
+function initChat() {
+  const greetings = { en: "Hi! I'm your UK family outing assistant.\n\nTell me:\n\u2022 Which city?\n\u2022 Kids' ages?\n\u2022 Indoor or outdoor?\n\u2022 Any interests?\n\nI'll recommend the best places!", zh: '你好！我是英国亲子出行助手。\n\n告诉我你的情况：\n\u2022 你在哪个城市？\n\u2022 孩子多大？\n\u2022 想要室内还是室外？\n\u2022 对什么感兴趣？\n\n我会推荐最合适的去处！' };
+  addBotMessage(greetings[LANG.current] || greetings.en); showQuickActions();
+}
+
+function showQuickActions() {
+  const el = document.getElementById('chatQuickActions');
+  const actions = { en: [['🏠 Indoor London','Indoor activities in London for rainy day'],['🦁 Zoo near Manchester','Zoo near Manchester for 3 year old'],['🏖️ Beach Cornwall','Beach in Cornwall for kids'],['🏰 Castle near York','Castle for 8 year old near York']], zh: [['🏠 伦敦室内玩','我在伦敦，下雨天想找室内游乐场'],['🦁 带3岁宝宝看动物','我孩子3岁，想去看动物，在曼彻斯特附近'],['🏖️ 海滩推荐','周末想带孩子去海滩，康沃尔'],['🏰 城堡推荐','想带8岁孩子去看城堡，在约克附近']] };
+  const a = actions[LANG.current] || actions.en;
+  el.innerHTML = a.map(([label, msg]) => `<button class="chat-quick-btn" onclick="sendQuickMsg('${msg.replace(/'/g,"\\'")}')">${label}</button>`).join('');
+}
+
+function sendQuickMsg(msg) { document.getElementById('chatInput').value = msg; handleChatSend(); }
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function addBotMessage(text) { const el = document.getElementById('chatMessages'); const div = document.createElement('div'); div.className = 'chat-msg bot'; div.innerHTML = escapeHtml(text).replace(/\n/g, '<br>'); el.appendChild(div); el.scrollTop = el.scrollHeight; }
+function addUserMessage(text) { const el = document.getElementById('chatMessages'); const div = document.createElement('div'); div.className = 'chat-msg user'; div.textContent = text; el.appendChild(div); el.scrollTop = el.scrollHeight; }
+function showTyping() { const el = document.getElementById('chatMessages'); const div = document.createElement('div'); div.className = 'chat-typing'; div.id = 'chatTyping'; div.innerHTML = '<span></span><span></span><span></span>'; el.appendChild(div); el.scrollTop = el.scrollHeight; }
+function removeTyping() { const t = document.getElementById('chatTyping'); if (t) t.remove(); }
+
+function handleChatSend() {
+  const input = document.getElementById('chatInput'); const msg = input.value.trim(); if (!msg) return;
+  addUserMessage(msg); input.value = ''; document.getElementById('chatQuickActions').innerHTML = ''; showTyping();
+  setTimeout(() => { removeTyping(); const parsed = parseUserMessage(msg); const venues = recommendVenues(parsed); const response = buildChatResponse(parsed, venues); let venueChips = ''; if (venues.length > 0) { venueChips = '<div style="margin-top:8px">' + venues.map(v => `<span class="chat-venue-chip" onclick="chatShowVenue(${v.lat},${v.lon},'${v._name.replace(/'/g,"\\'")}')">${v._cat.emoji} ${v._name}</span>`).join('') + '</div>'; } addBotMessage(response + venueChips); }, 600 + Math.random() * 400);
+}
+
+function chatShowVenue(lat, lon, name) { map.flyTo([lat, lon], 14, { duration: 1 }); const v = state.allVenues.find(x => x.name === name); if (v) selectVenue(v.id); if (window.innerWidth <= 768) toggleChat(false); }
+document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); handleChatSend(); } });
+
+function toggleFavorite(venueId, btnEl) {
+  const idx = state.favorites.indexOf(venueId);
+  if (idx >= 0) { state.favorites.splice(idx, 1); if (btnEl) { btnEl.classList.remove('favorited'); btnEl.textContent = '\u2661'; } } else { state.favorites.push(venueId); if (btnEl) { btnEl.classList.add('favorited'); btnEl.textContent = '\u2764\uFE0F'; } }
+  if (btnEl) { btnEl.classList.remove('bounce'); void btnEl.offsetWidth; btnEl.classList.add('bounce'); }
+  localStorage.setItem('uk-kids-explorer-favorites', JSON.stringify(state.favorites));
+  buildFilterBar(); if (state.showFavoritesOnly) { state.displayed = 0; applyFilter(); }
+}
+
+function toggleFavoritesFilter() { state.showFavoritesOnly = !state.showFavoritesOnly; if (state.showFavoritesOnly) { state.activeCategory = null; } state.displayed = 0; applyFilter(); buildFilterBar(); }
+
+function searchVenueFromAutocomplete(lat, lon, venueId, venueName) {
+  autocompleteEl.classList.remove('open'); searchInput.value = venueName; map.flyTo([lat, lon], 16, { duration: 1 });
+  const v = state.allVenues.find(x => x.id === venueId);
+  if (v) { selectVenue(v.id); } else { L.popup().setLatLng([lat, lon]).setContent(`<div class="popup-content"><div class="popup-name">${escapeHtml(venueName)}</div></div>`).openOn(map); }
+}
+
+function activateNearMe() {
+  autocompleteEl.classList.remove('open'); const btn = document.getElementById('nearmeBtn');
+  if (!navigator.geolocation) { showToast(T[LANG.current].nearMeError); return; }
+  btn.classList.add('active'); showToast(T[LANG.current].nearMeSearching, 2000);
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const lat = pos.coords.latitude; const lon = pos.coords.longitude; state.userLocation = [lat, lon];
+    if (state.userLocationMarker) { map.removeLayer(state.userLocationMarker); }
+    state.userLocationMarker = L.circleMarker([lat, lon], { radius: 10, color: '#4285F4', fillColor: '#4285F4', fillOpacity: 0.5, weight: 3, opacity: 0.8 }).addTo(map).bindPopup(T[LANG.current].yourLocation);
+    state.displayed = 0; applyFilter(); buildFilterBar(); map.flyTo([lat, lon], 11, { duration: 1 }); showToast(T[LANG.current].sortedByDistance, 2000);
+  }, (err) => { btn.classList.remove('active'); if (err.code === 1) { showToast(T[LANG.current].nearMePermDenied, 4000); } else { showToast(T[LANG.current].nearMeError); } }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+(function initBottomSheet() {
+  const sidebar = document.getElementById('sidebarSheet'); const handle = document.getElementById('bottomSheetHandle'); if (!handle) return;
+  const SNAP_COLLAPSED = 25; const SNAP_HALF = 50; const SNAP_FULL = 90; let sheetPos = SNAP_COLLAPSED; let startY = 0, startPos = 0, dragging = false;
+  function isMobile() { return window.innerWidth <= 768; }
+  function setSheetPosition(pct) { if (!isMobile()) { sidebar.style.transform = ''; sidebar.style.height = ''; return; } sheetPos = pct; const h = Math.min(pct, 90); sidebar.style.height = h + 'dvh'; sidebar.style.transform = 'translateY(0)'; }
+  handle.addEventListener('touchstart', (e) => { if (!isMobile()) return; dragging = true; startY = e.touches[0].clientY; startPos = sheetPos; sidebar.style.transition = 'none'; }, { passive: true });
+  handle.addEventListener('touchmove', (e) => { if (!dragging || !isMobile()) return; const dy = startY - e.touches[0].clientY; const dvh = (dy / window.innerHeight) * 100; const newPos = Math.max(10, Math.min(90, startPos + dvh)); sidebar.style.height = newPos + 'dvh'; }, { passive: true });
+  handle.addEventListener('touchend', () => { if (!dragging || !isMobile()) return; dragging = false; sidebar.style.transition = 'height 0.3s cubic-bezier(.4,0,.2,1)'; const currentH = parseFloat(sidebar.style.height) || SNAP_COLLAPSED; const snaps = [SNAP_COLLAPSED, SNAP_HALF, SNAP_FULL]; let closest = snaps[0]; let minDist = Math.abs(currentH - snaps[0]); for (const s of snaps) { const d = Math.abs(currentH - s); if (d < minDist) { minDist = d; closest = s; } } setSheetPosition(closest); });
+  function initMobileSheet() { if (isMobile()) { sidebar.style.transition = 'height 0.3s cubic-bezier(.4,0,.2,1)'; setSheetPosition(SNAP_COLLAPSED); } else { sidebar.style.transform = ''; sidebar.style.height = ''; sidebar.style.transition = ''; } }
+  window.addEventListener('resize', initMobileSheet); initMobileSheet();
+})();
+
+function openDetailPanel(venueId) {
+  const v = state.allVenues.find(x => x.id === venueId); if (!v) return;
+  const panel = document.getElementById('venueDetailPanel'); const body = document.getElementById('detailPanelBody');
+  const titleEl = document.getElementById('detailPanelTitle'); const t = T[LANG.current]; titleEl.textContent = t.venueDetails;
+  const isFav = state.favorites.includes(v.id); let html = '';
+  html += `<div class="detail-venue-icon" style="background:${v.category.bg}">${v.category.emoji}</div>`;
+  html += `<div class="detail-venue-name">${escapeHtml(v.name)}</div>`;
+  if (v.nameZh) html += `<div class="detail-venue-name-zh">${escapeHtml(v.nameZh)}</div>`;
+  html += `<span class="detail-category-badge" style="background:${v.category.bg};color:${v.category.color}">${v.category.emoji} ${v.category[LANG.current] || v.category.en}</span>`;
+  if (v.address) html += `<div class="detail-info-row"><span class="detail-icon">📍</span><span>${escapeHtml(v.address)}</span></div>`;
+  if (v.openingHours) html += `<div class="detail-info-row"><span class="detail-icon">\u{1F552}</span><span>${escapeHtml(translateHours(v.openingHours))}</span></div>`;
+  if (v.phone) html += `<div class="detail-info-row"><span class="detail-icon">\u{1F4DE}</span><a href="tel:${v.phone}">${escapeHtml(v.phone)}</a></div>`;
+  html += '<div class="detail-actions">';
+  if (v.website) html += `<a class="detail-btn detail-btn-website" href="${v.website}" target="_blank" rel="noopener">🔗 ${t.visitWebsite}</a>`;
+  html += `<a class="detail-btn detail-btn-navigate" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lon}" target="_blank" rel="noopener">🧭 ${t.navigateTo}</a>`;
+  html += `<button class="detail-btn detail-btn-favorite ${isFav ? 'favorited' : ''}" id="detailFavBtn" onclick="toggleDetailFavorite('${v.id.replace(/'/g,"\\'")}')"> ${isFav ? '❤️' : '♡'} ${isFav ? t.favorited : t.addFavorite}</button>`;
+  html += '</div>'; body.innerHTML = html; panel.classList.add('open');
+}
+
+function closeDetailPanel() { document.getElementById('venueDetailPanel').classList.remove('open'); }
+function toggleDetailFavorite(venueId) { toggleFavorite(venueId, null); const btn = document.getElementById('detailFavBtn'); const t = T[LANG.current]; const isFav = state.favorites.includes(venueId); if (btn) { btn.className = 'detail-btn detail-btn-favorite' + (isFav ? ' favorited' : ''); btn.innerHTML = `${isFav ? '❤️' : '♡'} ${isFav ? t.favorited : t.addFavorite}`; } renderList(); }
+
+const _origSelectVenue = selectVenue;
+window.selectVenue = function(id) { _origSelectVenue(id); openDetailPanel(id); };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetailPanel(); });
+
+const AGE_FILTER_RANGES = [
+  { id: 'all', en: 'All ages', zh: '所有年龄', emoji: '', categories: null },
+  { id: '0-3', en: '0-3', zh: '0-3岁', emoji: '👶', categories: ['children_farm','playground','indoor_playground','beach','chinese_restaurant','buffet'] },
+  { id: '3-6', en: '3-6', zh: '3-6岁', emoji: '🧒', categories: ['children_farm','playground','indoor_playground','beach','chinese_restaurant','buffet','zoo','aquarium','theme_park','nature','museum'] },
+  { id: '6-12', en: '6-12', zh: '6-12岁', emoji: '🧒', categories: null },
+];
+
+let activeAgeFilter = 'all';
+function setAgeFilter(ageId) { activeAgeFilter = ageId; if (ageId !== 'all') { state.activeCategory = null; state.showFavoritesOnly = false; } state.displayed = 0; applyFilter(); buildFilterBar(); buildAgeFilterPills(); }
+
+function buildAgeFilterPills() {
+  const existing = document.getElementById('ageFilterGroup'); if (existing) existing.remove();
+  const bar = document.getElementById('filterBar'); const group = document.createElement('div'); group.className = 'age-filter-group'; group.id = 'ageFilterGroup';
+  AGE_FILTER_RANGES.forEach(age => { const pill = document.createElement('button'); pill.className = 'age-pill' + (activeAgeFilter === age.id ? ' active' : ''); const label = age[LANG.current] || age.en; pill.innerHTML = age.emoji ? `${age.emoji} ${label}` : label; pill.onclick = () => setAgeFilter(age.id); group.appendChild(pill); });
+  bar.appendChild(group);
+}
+
+const INDOOR_CATEGORIES = ['indoor_playground','museum','aquarium','theatre','buffet','chinese_restaurant','sports'];
+let weatherBannerDismissed = false;
+
+async function fetchWeather() {
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=51.51&longitude=-0.13&current=temperature_2m,rain,weather_code');
+    const data = await res.json(); if (!data.current) return;
+    const temp = Math.round(data.current.temperature_2m); const rain = data.current.rain || 0; const code = data.current.weather_code || 0;
+    let emoji = '\u2600\uFE0F'; if (code >= 61) emoji = '🌧️'; else if (code >= 51) emoji = '🌦️'; else if (code >= 45) emoji = '🌫️'; else if (code >= 3) emoji = '\u26C5';
+    const badge = document.getElementById('weatherBadge'); badge.innerHTML = `${emoji} ${temp}&deg;C`; badge.style.display = 'flex';
+    if ((rain > 0 || code >= 61) && !weatherBannerDismissed) { const banner = document.getElementById('weatherBanner'); document.getElementById('weatherBannerText').textContent = T[LANG.current].weatherBannerText; document.getElementById('weatherBannerBtn').textContent = T[LANG.current].weatherBannerBtn; banner.style.display = 'flex'; }
+  } catch (e) { console.log('Weather fetch failed:', e.message); }
+}
+
+function filterIndoorWeather() {
+  activeAgeFilter = 'all'; state.showFavoritesOnly = false; state.activeCategory = null; state.displayed = 0;
+  let list = state.allVenues.filter(v => INDOOR_CATEGORIES.includes(v.category.id));
+  if (state.userLocation) { list.forEach(v => { v._userDist = haversine(state.userLocation[0], state.userLocation[1], v.lat, v.lon); }); list.sort((a, b) => a._userDist - b._userDist); }
+  state.filtered = list; renderList(); renderMarkers(); buildFilterBar(); buildAgeFilterPills(); showToast(T[LANG.current].showingIndoor, 2000); dismissWeatherBanner();
+}
+
+function dismissWeatherBanner() { weatherBannerDismissed = true; document.getElementById('weatherBanner').style.display = 'none'; }
+
+buildFilterBar(); buildAgeFilterPills(); setLang('en'); loadStaticVenues(); fetchWeather();
+</script>
+</body>
+</html>
